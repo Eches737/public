@@ -1,0 +1,1137 @@
+/* styles.css - 테마 제거, 검색폼 확실한 중앙정렬 */
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0px;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  background:#ffffff; color:#111827;
+}
+
+/* 레이아웃 헬퍼 */
+.container{max-width:1100px; margin:0 auto; padding:0 16px}
+.sr-only{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
+
+/* 헤더 - 깔끔한 디자인 */
+.site-header{position:sticky; top:0; background:#ffffff; border-bottom:1px solid #e5e7eb; z-index:10; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);}
+.site-header__inner{display:flex; justify-content:center; align-items:center; padding:16px 0;}
+.site-header__brand{margin:0; text-align:center; font-size:1.6rem; font-weight:600;}
+.site-header__brand a{text-decoration:none; color:#111827;}
+.site-header__actions{position:absolute; right:16px; display:flex; gap:6px; align-items:center;}
+.btn{border:1px solid #e5e7eb; background:#fff; color:#111827; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+.btn--primary{background:#3b82f6; border-color:transparent; color:#fff}
+.btn--success{background:#10b981; border-color:transparent; color:#fff}
+.btn--success:hover{background:#059669}
+.btn--ghost{background:transparent}
+.btn--icon{padding:.4rem .6rem}
+.btn--sm{padding:.35rem .55rem; font-size:.85rem}
+
+/* 검색 섹션 - 깔끔하고 중앙 집중적 */
+.search{
+  padding:40px 16px;
+  position:relative;
+  z-index:1;
+}
+.search-wrapper{
+  display:flex;
+  justify-content:center;
+}
+.search-form{
+  width:100%;
+  max-width:1000px;
+  margin:0 auto;
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 메인 행 레이아웃 */
+.search-row{
+  display:grid;
+  grid-template-columns: 1fr 180px auto;
+  gap:12px; align-items:end;
+}
+
+/* 검색어 입력 컨테이너 */
+.search-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* 선택된 출판사 표시 영역 */
+.selected-publishers-display {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.selected-publisher-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.field{display:flex; flex-direction:column; gap:6px}
+.label{font-size:.9rem; color:#6b7280}
+.control{
+  width:100%; padding:.85rem 1rem; border:1px solid #e5e7eb; border-radius:12px; background:#fff; color:#111827
+}
+.control:focus{outline:2px solid #93c5fd}
+.control--lg{padding:1.05rem 1.1rem; font-size:1.05rem}
+.field--sm .control{padding:.6rem .8rem}
+.hint{font-size:.8rem; color:#6b7280}
+.actions{display:flex; gap:8px}
+
+/* 상세검색 */
+.adv{margin-top:10px; border:1px dashed #e5e7eb; border-radius:12px}
+.adv[open]{background:#f7f8fb}
+.adv__summary{
+  list-style:none; 
+  cursor:pointer; 
+  padding:.65rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.adv__summary::marker{content:""}
+
+/* 출판사 선택 버튼 */
+.publisher-select-btn {
+  margin-left: auto;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+  transition: all 0.2s;
+}
+
+.publisher-select-btn:hover {
+  background: #5a67d8;
+  border-color: #5a67d8;
+  transform: translateY(-1px);
+}
+.adv__grid{display:grid; grid-template-columns:150px 150px 1fr; gap:12px; padding:0 1rem 1rem}
+
+/* 칩 & 결과 */
+.chips{display:flex; gap:8px; flex-wrap:wrap; padding-top:10px}
+.chips .chip{background:#eef2ff; border:1px solid #e5e7eb; border-radius:999px; padding:.25rem .6rem; font-size:.85rem}
+
+.results{
+  position:relative;
+  z-index:1;
+  align-self:start;
+  min-height:0;
+}
+.results__header{display:flex; align-items:end; justify-content:space-between; gap:12px; margin-top:24px}
+.results__title{margin:0; font-size:1.1rem}
+.results__meta{color:#6b7280; font-size:.9rem}
+.results__list{list-style:none; margin:14px auto 0; padding:0 16px; max-width:1100px; display:grid; gap:10px}
+.result-card{display:grid; grid-template-columns:1fr auto; gap:12px; padding:14px; background:#fff; border:1px solid #e5e7eb; border-radius:14px}
+.result-card__title{margin:.1rem 0 .2rem; font-size:1.02rem}
+.result-card__link{color:#111827; text-decoration:none}
+.result-card__link:hover{text-decoration:underline}
+.result-card__meta{margin:.2rem 0 .6rem; color:#6b7280; font-size:.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
+.result-card__tags{display:flex; gap:6px; flex-wrap:wrap}
+
+/* 출판사 정보 */
+.result-card__publisher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: white;
+}
+
+/* 결과 통계 */
+.result-card__stats {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.result-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.result-stat--impact {
+  color: #059669;
+  font-weight: 500;
+}
+
+.result-stat--citations {
+  color: #7c3aed;
+}
+
+.result-stat--access {
+  color: #dc2626;
+}
+
+.result-stat--access.open {
+  color: #059669;
+}
+
+/* 페이지네이션 */
+.pagination{display:flex; gap:6px; justify-content:center; padding:12px 0}
+.pagination__btn{
+  border:1px solid #e5e7eb;
+  background:transparent;
+  color:#111827;
+  padding:0.75rem 1.25rem;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:0.95rem;
+  font-weight:500;
+  transition: all 0.2s ease;
+  min-width: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pagination__btn:hover{
+  background:#f3f4f6;
+  border-color:#d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.pagination__btn:active{
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.pagination__btn--active{
+  background:#3b82f6;
+  color:#fff;
+  border-color:#3b82f6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+.pagination__btn--active:hover{
+  background:#2563eb;
+  border-color:#2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* 빈 상태 */
+.emptystate{padding:18px; text-align:center; color:#6b7280}
+
+/* 사이드바 레이아웃 - 완전 독립 위치 */
+.layout{
+  position:relative;
+}
+.content{
+  margin-left:310px;
+  min-height:0;
+  height:auto;
+  overflow:visible;
+}
+.sidebar{
+  background:#ffffff; 
+  border:2px solid #d1d5db; 
+  border-radius:12px; 
+  padding:8px; 
+  width:280px;
+  height:auto;
+  max-height:80vh;
+  overflow-y:auto;
+  position:fixed;
+  left:12px;
+  top:80px;
+  z-index:1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Collapsed sidebar state: narrow left rail showing only header/actions */
+#sidebar.collapsed{
+  width:56px;
+  min-width:56px;
+  padding:6px 8px;
+  overflow:visible;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+#sidebar.collapsed .sidebar__body{ display:none !important; }
+#sidebar.collapsed .sidebar__header{ justify-content:center; }
+#sidebar.collapsed .sidebar__title{ display:none; }
+#sidebar.collapsed .btn--icon{ padding:6px; }
+
+/* Shift content when sidebar collapsed (adjacent sibling selector) */
+.layout #sidebar.collapsed + .content,
+#sidebar.collapsed + .content{
+  margin-left:80px; /* leave room for narrow rail + spacing */
+}
+.sidebar__header{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.sidebar__title{margin:0; font-size:1rem}
+.sidebar__body{margin-top:8px}
+.sidebar__adder{display:flex; gap:6px; align-items:center}
+.sidebar__adder .control{flex:1; padding:.3rem .5rem; font-size:.92rem}
+.sidebar__adder #addListBtn{padding:.35rem .5rem; font-size:.88rem}
+.user-lists{list-style:none; margin:8px 0 0; padding:0; display:block}
+
+/* Prevent viewer sidebar lists from overflowing the viewport.
+  - make sidebar body scrollable with a max-height relative to viewport
+  - ensure titles shrink (min-width:0) and use ellipsis so long names don't push layout
+  - ensure action area stays pinned to the right */
+.sidebar{box-sizing:border-box}
+.sidebar__body{overflow:auto; max-height:calc(100vh - 140px); padding-right:8px}
+.user-list-item{box-sizing:border-box}
+/* --- 목록 제목 스타일 통합 --- */
+.user-list-item .title,
+.user-list-item .user-list__title,
+.user-list__title {
+  flex: 1 1 0; /* 최소 폭 0으로 설정하여 줄바꿈 유도 */
+  min-width: 0;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal; /* 줄바꿈 허용 */
+  font-weight: 600;
+  font-size: .98rem;
+  color: inherit;
+  display: block;
+  word-wrap: break-word; /* 긴 단어 줄바꿈 */
+  word-break: break-word; /* 강제 줄바꿈 */
+  line-height: 1.3;
+  text-align: left;
+  width: 100%;
+}
+.user-list__actions.actions{flex:0 0 auto}
+
+/* Ensure nested lists don't push the sidebar wider */
+.user-lists--nested{
+  max-width:100%;
+  box-sizing:border-box;
+  margin-top:6px;
+  margin-left:0;
+  display:block;
+  width:100%;
+}
+
+/* 최상위 목록은 좌측 패딩 없음 */
+#userLists {
+  padding-left: 0;
+}
+
+/* 하위 목록 컨테이너에 들여쓰기 적용 */
+.user-list-item__children {
+  padding-left: 0;
+  margin: 0;
+}
+
+/* 자식 목록 아이템은 좌측 패딩을 늘려서 들여쓰기 효과 */
+.user-lists--nested .user-list-item {
+  /* Left-align child list items: remove extra left indentation so child headers
+     and content line up with parent items. */
+  padding: 0.375rem 0.1rem 0.375rem 0;
+}
+.user-list-item{
+  display:flex; 
+  flex-direction: column; /* 세로로 배치하여 줄바꿈 허용 */
+  align-items:stretch; /* 전체 너비 사용 */
+  gap:8px;
+  padding:.5rem .2rem .5rem 0.2rem; 
+  border-radius:8px; 
+  margin-bottom:4px;
+  transition: all 0.2s ease;
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 헤더 부분 (제목 + 액션 버튼) */
+.user-list-item__header {
+  display: flex;
+  align-items: center; /* baseline alignment for title + buttons */
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap; /* prevent title/actions from wrapping */
+  width: 100%;
+}
+
+/* If nested items add left padding for indentation, shift the header back so
+   the visible header row lines up with parent headers (text + actions). */
+.user-lists--nested .user-list-item > .user-list-item__header {
+  /* Reset any previous negative margin used to visually align headers.
+     Keep header content left-aligned with the sidebar and allow actions
+     to remain right-aligned. */
+  margin-left: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Ensure the title area and action group inside the header align properly */
+.user-list__title,
+.user-list-item .title,
+.user-list__title .title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.user-list__actions.actions,
+.user-list__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* 사이드바 PDF 항목 */
+.user-list-item--pdf, 
+.user-list-item[data-type="pdf"] {
+  background:linear-gradient(135deg,#f0f9ff,#e0f2fe) !important; 
+  border:1px solid #7dd3fc !important;
+}
+
+/* Small left padding for PDF sidebar items so they aren't flush to the sidebar edge.
+   Scoped to the sidebar and PDF variants only to avoid affecting other list cards. */
+.sidebar .user-list-item--pdf,
+.sidebar .user-list-item[data-type="pdf"],
+.sidebar .list-card--pdf {
+  padding-left: 0.5rem;
+}
+
+/* 사이드바 일반 목록 항목 */
+.user-list-item:not(.user-list-item--pdf):not([data-type="pdf"]) {
+  background:linear-gradient(135deg,#fff7ed,#ffedd5); 
+  border:1px solid #fbbf24;
+}
+
+/* 사이드바 호버 효과 */
+.user-list-item--pdf:hover,
+.user-list-item[data-type="pdf"]:hover {
+  background:linear-gradient(135deg,#e0f2fe,#bae6fd) !important;
+  transform: translateX(2px);
+}
+
+.user-list-item:not(.user-list-item--pdf):not([data-type="pdf"]):hover {
+  background:linear-gradient(135deg,#ffedd5,#fed7aa);
+  transform: translateX(2px);
+}
+
+.user-list-item button{padding:.15rem .35rem; font-size:.82rem}
+
+/* --- Harmony: make viewer list items visually match main page .list-card --- */
+.user-list-item.list-card{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  border-radius:10px;
+  background:transparent; /* allow specific variants to override */
+  border:1px solid #e5e7eb;
+}
+/* 📄 PDF 항목 - 연한 파란색 계열 */
+.user-list-item.list-card--pdf{ 
+  background:linear-gradient(135deg,#f0f9ff,#e0f2fe); 
+  border-color:#7dd3fc; 
+  border-width:1px;
+  box-shadow: 0 1px 3px rgba(125, 211, 252, 0.08);
+}
+
+/* 📁 일반 목록 - 연한 주황색 계열 */
+.user-list-item:not(.list-card--pdf){ 
+  background:linear-gradient(135deg,#fff7ed,#ffedd5); 
+  border-color:#fbbf24; 
+  border-width:1px;
+  box-shadow: 0 1px 3px rgba(251, 191, 36, 0.08);
+}
+
+/* 호버 효과 - 더 부드럽게 */
+.user-list-item.list-card--pdf:hover {
+  background:linear-gradient(135deg,#e0f2fe,#bae6fd);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(125, 211, 252, 0.12);
+  transition: all 0.2s ease;
+}
+
+.user-list-item:not(.list-card--pdf):hover {
+  background:linear-gradient(135deg,#ffedd5,#fed7aa);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.12);
+  transition: all 0.2s ease;
+}
+
+/* title styling should match main page */
+/* title styling should match main page - 위에서 통합 정의됨 */
+
+/* actions align to the right and buttons share main .actions/.btn layout */
+.user-list__actions.actions{ margin-left:0; display:flex; gap:8px; align-items:center; grid-column:3; grid-row:1; justify-self:end }
+.user-list__actions.actions .btn{ padding:.35rem .55rem; border-radius:10px }
+
+/* nested lists: children are indented and stacked - 위에서 통합 정의됨 */
+/* Make list-item buttons visually identical to primary .btn styles used on main page */
+.user-list-item .btn{
+  border:1px solid #e5e7eb;
+  background:#fff;
+  color:#111827;
+  padding:.35rem .55rem;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:.85rem;
+}
+.user-list-item[aria-current="true"]{outline:2px solid #93c5fd}
+
+/* PDF nodes are leaf items; give them a subtle blue tint.
+  Previously we hid the add-child control for PDFs; keep the visual tint
+  but allow the add-child button to be visible so users can create children
+  under PDF nodes if desired. */
+.user-list-item--pdf{background:#f4fbff; border-color:#dbeffd}
+.user-list-item--pdf .user-list__title{color:#0f172a}
+.user-list-item--pdf .js-add-child{display:inline-block}
+
+/* Parent lists (folders) — give a warm, subtle tint to differentiate from PDFs */
+.user-list-item:not(.user-list-item--pdf){
+  background: linear-gradient(180deg, #fffdfa, #fffbf2);
+  border-color: #f5e6d0;
+}
+.user-list-item:not(.user-list-item--pdf) .user-list__title{color:#42301a}
+.user-list-item:not(.user-list-item--pdf):hover{ background: linear-gradient(180deg, #fffaf0, #fff6e6); }
+.user-list-item:not(.user-list-item--pdf)[aria-current="true"]{ outline:2px solid #f59e0b }
+
+/* nested lists: children are indented and stacked - 위에서 통합 정의됨 */
+.user-list__actions{
+  display:flex; 
+  gap:4px; 
+  align-items:flex-start; 
+  flex-shrink:0;
+}
+/* 이미 위에서 통합 정의됨 - 중복 제거 */
+
+/* draggable card styles */
+.user-list-item[draggable="true"]{cursor:grab}
+.user-list-item.dragging{opacity:0.5}
+.user-lists .drop-target{
+  outline: 2px dashed #0ea5e9;
+  background-color: rgba(240, 249, 255, 0.3);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* drop indicators between items */
+.user-list-item.drop-before::before{
+  content:"";
+  display:block;
+  height:3px;
+  background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+  margin-bottom:6px;
+  border-radius:2px;
+  animation: dropIndicatorPulse 0.8s ease-in-out infinite alternate;
+}
+.user-list-item.drop-after::after{
+  content:"";
+  display:block;
+  height:3px;
+  background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+  margin-top:6px;
+  border-radius:2px;
+  animation: dropIndicatorPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes dropIndicatorPulse {
+  0% { opacity: 0.6; transform: scaleX(0.8); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+/* drag start animation */
+.user-list-item.dragging{
+  transform: translateY(-8px) scale(0.95) rotate(3deg);
+  box-shadow: 0 16px 32px rgba(2,6,23,0.2), 0 0 0 2px #3b82f6;
+  transition: all 0.2s ease;
+  opacity: 0.8;
+  z-index: 1000;
+  position: relative;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+}
+
+/* PDF viewer styles */
+/* PDF viewer: center the viewer content (toolbar + iframe) and constrain width for better readability */
+.pdf-section{
+  margin-top:14px;
+  padding:12px;
+  border:1px solid #e5e7eb;
+  border-radius:10px;
+  background:#fff;
+  display:flex;
+  flex-direction:column;
+  align-items:center; /* horizontally center toolbar + iframe */
+  justify-content:center; /* vertically center within available viewport area */
+  min-height: calc(100vh - 140px); /* leave space for header and site chrome */
+}
+.pdf-toolbar{display:flex; align-items:center; gap:12px; margin-bottom:8px; width:100%; justify-content:center}
+.pdf-name{font-size:0.95rem; color:#111827}
+/* iframe now controlled by .pdf-iframe class. Use a max-width so large PDFs don't stretch the page */
+.pdf-iframe{
+  width:100%;
+  max-width:1000px;
+  height: min(80vh, calc(100vh - 220px)); /* constrain height to viewport while leaving room for header and padding */
+  max-height: calc(100vh - 120px);
+  border:0;
+  border-radius:8px;
+  box-shadow:0 6px 22px rgba(2,6,23,0.06);
+  display:block;
+}
+
+@media (max-width:840px){
+  .pdf-iframe{height:60vh}
+}
+
+/* PDF.js canvas */
+.pdf-canvas{width:100%; border:1px solid #e5e7eb; border-radius:8px; background:#fff}
+.pdf-toolbar{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px}
+.pdf-controls{display:flex; gap:8px; align-items:center}
+.pdf-tools{display:flex; gap:8px; align-items:center}
+
+/* Static sidebar tabs (when lists are removed) */
+.sidebar-tabs{display:flex; gap:8px; padding:8px 4px; align-items:center}
+.sidebar-tabs .tab{flex:0 0 auto; border-radius:8px; padding:.45rem .7rem; background:transparent}
+.sidebar-tabs .tab[aria-pressed="true"], .sidebar-tabs .tab:focus{background:#eef2ff; border:1px solid #dbeffd}
+
+
+/* list contents: GitHub-like list rows
+   - Provide styling for the sidebar's #listContents and the UL.list-rows
+   - Reuse .list-card for individual rows so both main content and sidebar rows match visually */
+.sidebar__contents, #listContents, .list-contents{margin-top:12px; display:block; padding:8px}
+.sidebar__contents{ /* keep sidebar contents confined and scrollable inside sidebar body */
+  box-sizing:border-box;
+}
+.list-rows{list-style:none; margin:0; padding:0; display:block}
+.list-row{display:block}
+.list-card{
+  display:flex; flex-direction:row; align-items:center; gap:12px;
+  padding:10px 12px; border-bottom:1px solid #e6edf3; background:transparent; border-radius:10px;
+}
+.list-card:hover{ background:linear-gradient(180deg, #fbfcfe, #ffffff); }
+.list-card .title{font-weight:600; font-size:.98rem}
+.list-card .meta{color:#6b7280; font-size:.85rem}
+.list-card .actions{margin-left:auto; display:flex; gap:8px; align-items:center}
+.list-card .actions .btn{padding:.3rem .5rem; font-size:.85rem}
+.list-card--pdf{background:linear-gradient(180deg, #fbfdff, #ffffff); border-color:#dbeffd}
+.list-card--pdf .meta{color:#0b5cff}
+
+/* left icon for file/folder */
+.list-card::before{content:''; display:inline-block; width:28px; text-align:center; margin-right:6px; font-size:18px}
+.list-card--pdf::before{content:'📄'}
+.list-card:not(.list-card--pdf)::before{content:'📁'}
+
+/* compact mobile: stack title+meta */
+@media (max-width:640px){
+  .list-card{flex-direction:column; align-items:flex-start}
+  .list-card::before{display:none}
+  .list-card .actions{width:100%; justify-content:flex-end}
+}
+
+/* upload badge */
+.upload-badge{display:inline-block; min-width:54px; text-align:center; padding:.15rem .4rem; border-radius:999px; font-size:.78rem; color:#083344; background:#e6f2f8; margin-right:8px}
+.list-row--pdf .upload-badge{background:#e8f5ff; color:#08406a}
+
+/* make list cards draggable */
+.list-card[draggable="true"]{cursor:grab}
+.list-card.dragging{
+  opacity: 0.7; 
+  transform: translateY(-6px) scale(0.98) rotate(2deg); 
+  box-shadow: 0 12px 24px rgba(2,6,23,0.12);
+  z-index: 1000;
+  position: relative;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.1s;
+}
+
+/* connector lines for nested lists */
+/* connectors removed per request */
+
+@media (max-width:840px){
+  .layout{position:static}
+  .sidebar{position:static; width:100%; max-height:none; margin-bottom:12px}
+  .content{margin-left:0}
+}
+
+/* Toast notifications */
+#ps-toast-container{
+  position:fixed; right:18px; bottom:18px; z-index:99999; display:flex; flex-direction:column; gap:8px; align-items:flex-end; pointer-events:none;
+}
+.ps-toast{
+  pointer-events:auto;
+  background:rgba(17,24,39,0.95); color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 8px 24px rgba(2,6,23,0.2); min-width:180px; max-width:360px; font-size:0.95rem;
+  border:1px solid rgba(255,255,255,0.06);
+}
+.ps-toast--info{ background:linear-gradient(180deg,#111827,#0b1220); }
+.ps-toast--warn{ background:linear-gradient(180deg,#b45309,#92400e); }
+.ps-toast--error{ background:linear-gradient(180deg,#b91c1c,#7f1d1d); }
+.ps-toast__close{ float:right; margin-left:8px; cursor:pointer; opacity:0.9; border:none; background:transparent; color:inherit }
+
+/* 🔥 MODAL 강제 제어: 출판사 모달이 자동으로 열리지 않도록 강제 */
+.publisher-dialog {
+  display: none !important;
+}
+
+.publisher-dialog[open] {
+  display: flex !important;
+}
+
+.publisher-dialog:not([open]) {
+  display: none !important;
+}
+
+/* 출판사 모달 스타일 */
+.publisher-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.publisher-dialog__content {
+  background: white;
+  border-radius: 12px;
+  padding: 0px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.publisher-dialog__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0px;
+  padding-bottom: 0px;
+  border-bottom: 0px solid #e5e7eb;
+}
+
+.publisher-dialog__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.publisher-dialog__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.publisher-dialog__close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.publisher-dialog__body {
+  margin-bottom: 24px;
+}
+
+.publisher-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.publisher-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.publisher-item:hover {
+  background: #f9fafb;
+}
+
+.publisher-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+}
+
+.publisher-name {
+  flex: 1;
+  font-weight: 500;
+  color: #111827;
+}
+
+.publisher-count {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.publisher-dialog__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 반응형 */
+@media (max-width:840px){
+  .search-row{grid-template-columns:1fr}
+  .adv__grid{grid-template-columns:1fr 1fr}
+  .site-header__inner{grid-template-columns:1fr auto}
+  .site-header__brand{text-align:left}
+  .site-header__actions{grid-column:2 / -1}
+  
+  /* 출판사 선택 버튼을 모바일에서는 줄바꿈 */
+  .adv__summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .publisher-select-btn {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+}
+
+@media (max-width:640px){
+  /* 선택된 출판사 로고 크기 조정 */
+  .selected-publisher-logo {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  
+  .search-input-container input {
+    padding-right: 40px; /* 로고들을 위한 공간 확보 */
+  }
+}
+
+/* 드래그 앤 드롭 애니메이션 */
+.user-list-item.drag-over{
+  background-color: #f0f9ff;
+  border-color: #0ea5e9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+  transition: all 0.15s ease;
+  z-index: 10;
+  position: relative;
+}
+
+/* 검색 결과와 목록 카드에도 드래그 오버 효과 적용 */
+.list-card.drag-over{
+  background-color: #f0f9ff;
+  border-color: #0ea5e9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+  transition: all 0.15s ease;
+  z-index: 10;
+  position: relative;
+}
+
+.user-list-item.drag-over::before{
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #0ea5e9, #06b6d4);
+  border-radius: 1px;
+  animation: dragPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes dragPulse {
+  0% { opacity: 0.6; transform: scaleX(0.8); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+/* PDF 뷰어 드래그오버 효과 */
+.pdf-viewer-container.dragover {
+  border-color: #0ea5e9;
+  background-color: rgba(240, 249, 255, 0.5);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+.pdf-viewer-container.dragover::after {
+  content: '📄 PDF 파일을 여기에 드롭하세요';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(14, 165, 233, 0.9);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  z-index: 1000;
+  animation: dropZonePulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes dropZonePulse {
+  0% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+}
+
+/* 출판사 로고 스타일 */
+.publisher-logo {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 0.9em;
+  vertical-align: middle;
+}
+
+/* 출판사 블록 스타일 */
+.publisher-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+/* 출판사 이름 스타일 */
+.publisher-name {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 로딩 스피너 스타일 */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+  max-width: 400px;
+}
+
+.loading-spinner__content {
+  text-align: center;
+}
+
+.loading-spinner__icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+  animation: pulse 2s infinite;
+}
+
+.loading-spinner__text {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.loading-spinner__dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.loading-spinner__dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  animation: loadingDots 1.4s infinite ease-in-out both;
+}
+
+.loading-spinner__dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-spinner__dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes loadingDots {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Sidebar card overflow / stacking fixes
+   Ensures elements inside a card (file tags, dropdowns, popovers) can extend
+   outside the card without being clipped, and places them above sibling cards.
+   These selectors are intentionally broad to catch the various card classes used
+   in the PDF viewer sidebar. If your project uses different class names, adapt as needed. */
+
+/* Make card containers allow visible overflow and establish stacking context */
+.sidebar-card,
+.list-card,
+.pdf-sidebar .card,
+.pdf-list .card,
+.card {
+  overflow: visible !important;
+  position: relative; /* create stacking context for children */
+  z-index: 0;
+}
+
+/* File tag / bubble that may protrude from the card */
+.card .file-tag,
+.card .file-bubble,
+.card .file-label,
+.card .file-pill {
+  position: relative; /* allow safe layering */
+  z-index: 5;
+  overflow: visible;
+}
+
+/* If badges or filename pills are absolutely positioned, ensure they render above siblings */
+.card .file-bubble.absolute,
+.card .file-pill.absolute {
+  position: absolute;
+  right: -8px; /* nudge outside the card edge */
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  pointer-events: auto; /* keep interactions possible */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* For very nested cards, ensure inner card doesn't create a clipping context */
+.card .card {
+  overflow: visible;
+}
+
+/* Strong reset: remove any visual indentation for nested lists in the sidebar PDF viewer
+   Ensures child list boxes align flush with parent box's left edge. */
+.sidebar .user-lists--nested,
+.sidebar .user-lists--nested .user-list-item,
+.sidebar .user-lists--nested .user-list-item .list-card,
+.sidebar .user-lists--nested .user-list-item .user-list-item__children {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+  box-sizing: border-box;
+}
+
+/* If nested list items use an internal container that adds inset spacing,
+   remove that so the nested card border appears flush with the parent's left edge. */
+.sidebar .user-lists--nested .list-card{
+  margin-left: 0 !important;
+  padding-left: 12px; /* keep internal content padding but not indentation */
+}
+
+/* Ensure header row inside nested items stays aligned left without extra offset */
+.sidebar .user-lists--nested .user-list-item__header{
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Small spacing tweak so protruding elements don't overlap card borders awkwardly */
+.card .content,
+.card .card-body {
+  padding-right: 20px; /* leave room for right-side badges */
+}
+
+/* Accessibility: maintain focus visuals for interactive tags */
+.card .file-tag:focus,
+.card .file-tag:hover {
+  outline: 2px solid rgba(21,156,228,0.25);
+  outline-offset: 2px;
+}
+
+/* Parent ⇄ Child horizontal alignment (make nested card headers line up like index sidebar)
+   - Keeps header text and action buttons on the same horizontal line.
+   - Applies conservatively to sidebar/pdf-viewer nested cards to avoid global layout changes. */
+
+/* Ensure card header areas use flex so title + actions align horizontally */
+.card .card-header,
+.sidebar-card .card-header,
+.pdf-sidebar .card-header,
+.pdf-list .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* When a card contains a nested card, avoid shifting the nested header too far; keep headers on same baseline */
+.card > .card,
+.sidebar-card > .card,
+.pdf-sidebar .card > .card {
+  margin: 8px 0 0 0; /* small vertical gap, no extra horizontal offset */
+  padding-left: 14px; /* visual indentation for nested content while header stays aligned */
+  background-clip: padding-box;
+}
+
+/* Make the nested card's header use the same left alignment as the parent's header content area */
+.card > .card .card-header,
+.sidebar-card > .card .card-header {
+  padding-left: 0; /* keep header co-linear with parent's header content */
+}
+
+/* Action-button group inside headers should not wrap; keep them aligned to the right */
+.card .card-header .actions,
+.sidebar-card .card-header .actions,
+.pdf-sidebar .card-header .actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* Small tweak for deeply nested cards: reduce extra left-padding accumulation */
+.card .card .card,
+.sidebar-card .card .card {
+  padding-left: 8px;
+}
+
+/* In case previous rules add unexpected clipping, ensure nested cards allow visible overflow */
+.card > .card,
+.card .card {
+  overflow: visible;
+}

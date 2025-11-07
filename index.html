@@ -1,0 +1,694 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Development-friendly Content Security Policy: allow API connect to localhost:3001 -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:3001 ws://localhost:3001; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; object-src 'none';">
+  <!-- Enhanced client-side auth guard: redirect to login.html if not authenticated.
+       If a token exists we'll attempt a quick backend verification; if the backend
+       is unreachable we allow the local token for development but 401 from the
+       server forces a redirect to login. -->
+  <script>
+    (function(){
+      async function verifyToken(token) {
+        if (!token) return false;
+        // Try a short, non-blocking verification against the backend if available.
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(()=> controller.abort(), 1000);
+          const res = await fetch('http://localhost:3001/api/auth/verify', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token },
+            signal: controller.signal
+          });
+          clearTimeout(timeout);
+          if (res.status === 401) return false; // explicitly invalid
+          if (!res.ok) {
+            // If server returns other errors, treat as unverifiable (allow for dev)
+            console.warn('auth verify non-ok', res.status);
+            return 'unverifiable';
+          }
+          return true;
+        } catch (e) {
+          // network failures/timeouts -> unverifiable (development fallback)
+          console.warn('auth verify failed (network/timeout)', e);
+          return 'unverifiable';
+        }
+      }
+
+      (async function(){
+        try {
+          const path = window.location.pathname || '';
+          if (path.endsWith('/login.html') || path.endsWith('/login')) return;
+
+          const token = localStorage.getItem('paperscout_auth_token');
+          if (!token) {
+            window.location.replace('login.html');
+            return;
+          }
+
+          const v = await verifyToken(token);
+          if (v === true) {
+            // verified
+            return;
+          }
+          if (v === false) {
+            // invalid token
+            localStorage.removeItem('paperscout_auth_token');
+            localStorage.removeItem('paperscout_auth_user');
+            window.location.replace('login.html');
+            return;
+          }
+          // unverifiable (network/backend unreachable) -> allow for dev but warn
+          console.warn('Auth token could not be verified with backend; continuing in development mode.');
+        } catch (e) {
+          console.warn('auth guard error', e);
+        }
+      })();
+    })();
+  </script>
+  <title>📚 Sciflix - 학술 논문 검색</title>
+  
+  <script>
+    // Global shim: make 'wheel' listeners passive by default when possible.
+    // This improves scroll responsiveness and reduces console violations. The shim
+    // preserves explicit passive:false callers but will set passive:true when callers
+    // omit the passive flag (including when they pass an options object without passive).
+    (function(){
+      const original = window.addEventListener;
+      window.addEventListener = function(type, listener, options) {
+        if (type === 'wheel' && options !== false) {
+          if (typeof options === 'object' && options.passive === false) {
+            return original.call(this, type, listener, options);
+          }
+          const passiveOptions = typeof options === 'object' ? { ...options, passive: true } : { passive: true };
+          return original.call(this, type, listener, passiveOptions);
+        }
+        return original.call(this, type, listener, options);
+      };
+    })();
+  </script>
+  
+  <script>
+    // Cache busting for CSS to ensure fresh styles during development
+    (function(){
+      try{
+        var t = Date.now();
+        var l = document.createElement('link');
+        l.rel = 'stylesheet';
+        l.href = 'style.css?_=' + t;
+        document.head.appendChild(l);
+      }catch(e){ console.warn('failed to inject stylesheet', e); }
+    })();
+  </script>
+  
+  <!-- favicon 설정 - 브라우저 캐시 문제 방지를 위해 절대 경로 사용 -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  
+  <style>
+    /* 한글 폰트 강제 설정 */
+    * {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    }
+    
+    /* Keep the header logo color and decoration stable across interactions */
+    #brandLink, #brandLink:visited, #brandLink:focus, #brandLink:hover, #brandLink:active {
+      color: inherit;
+      text-decoration: none;
+    }
+  </style>
+  
+  <style>
+    /* Make the sidebar list container taller while preserving individual item sizes.
+       The .sidebar__body will grow to a sensible minimum height on desktop, but
+       remain bounded by the viewport on small screens. Internal list items keep their own sizing. */
+    @media (min-width:900px){
+      #sidebar .sidebar__body{min-height:560px; max-height:80vh; overflow:auto;}
+    }
+    /* Smaller screens: allow taller but limited area to avoid pushing footer off-screen */
+    @media (max-width:899px){
+      #sidebar .sidebar__body{min-height:360px; max-height:60vh; overflow:auto}
+    }
+    /* Ensure the lists themselves do not stretch their children */
+    #userLists, .user-lists{margin:0;padding:0;list-style:none}
+    #userLists > li{box-sizing:border-box}
+  </style>
+  
+  <style>
+    /* Ensure search input and sort select line up: inputs/selects share the same height
+       and the form fields align their controls on the same baseline. */
+    .search-row{display:flex;gap:1rem;align-items:center;flex-wrap:nowrap}
+    .search-row .field{display:flex;flex-direction:column}
+    .search-row .field .label{margin-bottom:0.2rem;font-size:0.85rem;color:#444}
+    .search-row .hint{margin-top:0.25rem;font-size:0.8rem;min-height:1.2rem}
+    /* unify heights and center controls vertically
+       Make inputs/selects/buttons render from the same box model so their visual heights match exactly. */
+    .search-row .control,
+    .search-row select,
+    .search-row .actions .btn{
+      box-sizing:border-box;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:2.5rem;
+      line-height:1.2;
+      text-align:center;
+      vertical-align:middle;
+    }
+    .search-row .control{padding:0 0.75rem;border:1px solid #ccc;border-radius:4px}
+    .search-row select{padding:0 0.5rem;border:1px solid #ccc;border-radius:4px;background:#fff}
+    .search-row .actions{display:flex;gap:0.5rem;align-items:center}
+    /* Add spacing above the labels and below the hints to accommodate
+       the alignment at 'end', so label and hint text gets proper visual breathing room */
+    .search-row .field .label::before{
+      content: "";
+      display: block;
+      height: 1rem;
+      margin-bottom: 0.1rem;
+    }
+    .search-row .field .hint::after{
+      content: "";
+      display: block;
+      height: 1.2rem;
+      margin-top: 0.25rem;
+    }
+    /* On very small screens allow wrapping to avoid overflow */
+    @media (max-width:700px){ .search-row{flex-wrap:wrap;align-items:stretch} .search-row .field--q{min-width:200px} }
+
+    /* 선택된 출판사 로고 스타일 */
+    .selected-publisher-logos {
+      max-width: 200px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .selected-publisher-logos::-webkit-scrollbar {
+      display: none;
+    }
+    .selected-publisher-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 3px;
+      border: 1px solid #ddd;
+      flex-shrink: 0;
+      object-fit: contain;
+      background: white;
+      padding: 2px;
+    }
+    .selected-publisher-logo:hover {
+      border-color: #007bff;
+      cursor: pointer;
+    }
+
+    /* 결과 섹션 초기 숨김 */
+    #resultsSection[hidden] {
+      display: none !important;
+    }
+
+    /* 검색 결과 영역 너비 최적화 */
+    .results {
+      max-width: 70%;
+      margin: 0 0 0.5rem auto;
+      padding: 0 1rem;
+    }
+    
+    .results__list {
+      width: 100%;
+      max-width: none;
+    }
+    
+    .list-card {
+      margin: 0 0 1rem 0;
+      max-width: none;
+    }
+    
+    /* 메인 컨테이너 너비 최적화 */
+    .container {
+      max-width: 95% !important;
+      padding: 0 1rem !important;
+    }
+    
+    /* 메인 콘텐츠 영역 너비 최적화 */
+    .main-content {
+      flex: 1;
+      max-width: none;
+      padding: 0 0.5rem;
+    }
+    
+    /* 사이드바 너비 조정 */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+    }
+    
+    /* 검색 결과 카드 너비 최적화 */
+    .result-card {
+      width: 100%;
+      max-width: none;
+      box-sizing: border-box;
+    }
+
+    /* 출판사 선택 모달 스타일 */
+    .publisher-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .publisher-dialog[open] {
+      display: flex;
+    }
+
+    .publisher-dialog__content {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .publisher-dialog__header {
+      padding: 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .publisher-dialog__header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    .publisher-dialog__close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .publisher-dialog__close:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .publisher-dialog__body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .publisher-dialog__footer {
+      padding: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    /* 출판사 목록 스타일 */
+    .publisher-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .publisher-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .publisher-item:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+
+    .publisher-item input[type="checkbox"] {
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .publisher-name {
+      font-weight: 500;
+      color: #1f2937;
+      flex: 1;
+    }
+
+    .publisher-count {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    /* 버튼 스타일 */
+    .btn {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      text-decoration: none;
+    }
+
+    .btn--primary {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn--primary:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn--ghost {
+      background: white;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn--ghost:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    /* Sync status badge */
+    .sync-badge{
+      display:inline-block;
+      padding:0.25rem 0.5rem;
+      font-size:0.8rem;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,0.05);
+      background:#f3f4f6;
+      color:#111827;
+      min-width:86px;
+      text-align:center;
+    }
+    .sync-badge--syncing{ background:#e6f0ff; color:#1e3a8a; border-color:#bfdbfe }
+    .sync-badge--success{ background:#ecfdf5; color:#065f46; border-color:#bbf7d0 }
+    .sync-badge--error{ background:#fff1f2; color:#881337; border-color:#fecaca }
+    .sync-badge--idle{ background:#f3f4f6; color:#374151; border-color:#e5e7eb }
+
+    .btn--icon {
+      padding: 0.25rem;
+      font-size: 1rem;
+      min-width: auto;
+      width: auto;
+    }
+
+    .btn--small {
+      padding: 0.375rem 0.625rem;
+      font-size: 0.75rem;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더(브랜드 중앙) -->
+  <header class="site-header" role="banner">
+    <div class="site-header__inner container">
+      <div aria-hidden="true"></div>
+      <h1 class="site-header__brand"><a id="brandLink" href="/">📚 Sciflix</a></h1>
+      <!-- site tools nav hidden on main page -->
+      <nav class="site-nav" aria-label="tools" style="display:none"></nav>
+      <div class="site-header__actions">
+        <button id="publishersBtn" class="btn btn--ghost" type="button" title="통합 출판사 검색">📚 출판사검색</button>
+        <button id="helpOpen" class="btn btn--ghost" type="button" aria-haspopup="dialog" aria-controls="helpDialog">❓</button>
+        <div id="syncStatus" style="display:inline-flex;align-items:center;margin-right:0.5rem;">
+          <span id="syncStatusBadge" class="sync-badge sync-badge--idle" aria-live="polite">동기화 없음</span>
+        </div>
+        <button id="logoutBtn" class="btn btn--ghost" type="button" title="로그아웃">로그아웃</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <div class="layout">
+      <aside id="sidebar" class="sidebar" aria-label="사용자 목록">
+        <header class="sidebar__header">
+          <h2 class="sidebar__title">내 목록</h2>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <button id="sidebarToggle" class="btn btn--icon" aria-expanded="true" aria-controls="sidebar">☰</button>
+          </div>
+        </header>
+        <div class="sidebar__body">
+          <label class="sr-only" for="newListName">새 목록 이름</label>
+          <div class="sidebar__adder">
+            <input id="newListName" type="text" class="control" placeholder="새 목록 이름" />
+            <button id="addListBtn" class="btn btn--primary" onclick="window.testAddList && window.testAddList()">추가</button>
+          </div>
+          <ul id="userLists" class="user-lists" aria-live="polite"></ul>
+        </div>
+      </aside>
+
+      <!-- 콘텐츠 컬럼 -->
+      <section class="content">
+        <!-- ✅ 검색 래퍼: 폼 가로 중앙정렬 -->
+        <section class="search">
+          <div class="search-wrapper">
+            <form id="searchForm" class="search-form" novalidate>
+              <h2 class="sr-only">논문 검색</h2>
+              
+              <!-- 페이지 제목 -->
+              <div class="page-header" style="text-align: center; padding-bottom: 0.5rem;">
+                <h1 style="margin: 0 0 0.1rem 0; font-size: 1.2rem; font-weight: 600; color: #111827;">📚 학술 논문 검색</h1>
+                <p style="margin: 0; color: #6b7280; font-size: 0.8rem;">키워드를 입력하여 논문을 검색하세요.</p>
+              </div>
+
+              <!-- 메인 행 -->
+              <div class="search-row">
+                <!-- 검색어 필드 -->
+                <div class="field field--q" style="flex:1;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+                    <label class="label" for="q" style="margin-bottom: 0;">검색어</label>
+                    <div id="selectedPublisherLogos" class="selected-publisher-logos" style="display: flex; gap: 0.25rem; align-items: center;"></div>
+                  </div>
+                  <input id="q" name="q" type="text" class="control" placeholder="예: machine learning, COVID-19, CRISPR" autocomplete="off" style="text-align: left;" />
+                  <div class="hint">키워드, 제목, 저자명 등으로 검색</div>
+                </div>
+
+                <!-- 정렬 -->
+                <div class="field">
+                  <label class="label" for="sort">정렬</label>
+                  <select id="sort" name="sort">
+                    <option value="relevance">관련도순</option>
+                    <option value="year-desc">최신순</option>
+                    <option value="year-asc">오래된순</option>
+                    <option value="impact-desc">임팩트 팩터순</option>
+                    <option value="citations-desc">인용순</option>
+                  </select>
+                  <div class="hint">결과 정렬 방식</div>
+                </div>
+
+                <!-- 액션 버튼들 -->
+                <div class="actions">
+                  <button type="submit" class="btn btn--primary">검색</button>
+                </div>
+              </div>
+
+              <!-- 하단 버튼 행 -->
+              <div class="search-row" style="justify-content: space-between; margin-top: 0.3rem;">
+                <div class="actions">
+                  <button type="button" id="advancedToggle" class="btn btn--ghost">고급</button>
+                </div>
+                <div class="actions">
+                  <button type="button" id="publisherSearchBtn" class="btn btn--ghost">출판사 선택</button>
+                </div>
+              </div>
+
+              <!-- 고급 검색 옵션 (기본 숨김) -->
+              <div id="advancedOptions" class="advanced-options" style="display:none; margin-top: 0.1rem; padding-top: 0.1rem; border-top: 1px solid #eee;">
+                <div class="search-row">
+                  <div class="field">
+                    <label class="label" for="yFrom">시작연도</label>
+                    <input id="yFrom" name="yFrom" type="number" class="control" placeholder="2020" min="1900" max="2030" />
+                    <div class="hint">예: 2020</div>
+                  </div>
+                  <div class="field">
+                    <label class="label" for="yTo">종료연도</label>
+                    <input id="yTo" name="yTo" type="number" class="control" placeholder="2024" min="1900" max="2030" />
+                    <div class="hint">예: 2024</div>
+                  </div>
+                  <div class="field">
+                    <label class="label" for="journal">저널명</label>
+                    <input id="journal" name="journal" type="text" class="control" placeholder="Nature, Science..." />
+                    <div class="hint">특정 저널명</div>
+                  </div>
+                </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- 활성 필터 칩 -->
+        <section id="activeChips" class="chips" aria-live="polite"></section>
+
+        <!-- 검색 결과 -->
+        <section id="resultsSection" class="results" aria-live="polite">
+          <header class="results__header">
+            <div id="resultsMeta" class="results__meta"></div>
+            <div class="results__controls">
+              <button id="exportCsv" class="btn btn--ghost">CSV 내보내기</button>
+            </div>
+          </header>
+          <ul id="resultsList" class="results__list"></ul>
+          <nav id="pagination" class="pagination" aria-label="검색 결과 페이지네이션"></nav>
+        </section>
+
+        <!-- 빈 상태 -->
+        <section id="emptyState" class="empty-state" style="display:none;">
+          <div class="empty-state__content">
+            <p style="color: #6b7280; font-size: 1rem;">검색 결과가 여기에 표시됩니다.</p>
+          </div>
+        </section>
+
+        <!-- 목록 콘텐츠 -->
+        <section id="listContents" class="list-contents" style="display:none;">
+          <header class="list-contents__header">
+            <h3 id="listContentsTitle">목록</h3>
+            <div class="list-contents__controls">
+              <button id="exportListCsv" class="btn btn--ghost">목록 내보내기</button>
+            </div>
+          </header>
+          <ul id="listContentsList" class="list-contents__list"></ul>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <!-- 결과 아이템 템플릿 -->
+  <template id="resultItemTemplate">
+    <li class="result-item" draggable="true">
+      <div class="result-item__content">
+        <h4 class="result-item__title">
+          <span data-field="url" class="result-card__link"></span>
+        </h4>
+        <div class="result-item__meta">
+          <span class="result-item__authors" data-field="authors"></span>
+          <span class="result-item__journal" data-field="journal"></span>
+          <span class="result-item__year" data-field="year"></span>
+        </div>
+        <div class="result-item__abstract" data-field="abstract"></div>
+        <div class="result-item__actions">
+          <button class="btn btn--ghost btn--small" data-action="add-to-list">목록에 추가</button>
+          <button class="btn btn--ghost btn--small" data-action="copy-doi" data-field="doi">DOI 복사</button>
+        </div>
+      </div>
+    </li>
+  </template>
+
+  <!-- 도움말 다이얼로그 -->
+  <dialog id="helpDialog" class="help-dialog" aria-labelledby="helpTitle">
+    <div class="help-dialog__content">
+      <header class="help-dialog__header">
+        <h2 id="helpTitle">키보드 단축키</h2>
+        <button class="help-dialog__close btn btn--icon" aria-label="닫기">×</button>
+      </header>
+      <div class="help-dialog__body">
+        <dl class="help-list">
+          <dt><kbd>/</kbd></dt>
+          <dd>검색창에 포커스</dd>
+          <dt><kbd>a</kbd></dt>
+          <dd>고급 검색 토글</dd>
+          <dt><kbd>b</kbd></dt>
+          <dd>사이드바 토글</dd>
+          <dt><kbd>?</kbd></dt>
+          <dd>이 도움말 표시</dd>
+          <dt><kbd>Escape</kbd></dt>
+          <dd>다이얼로그 닫기</dd>
+        </dl>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 출판사 선택 다이얼로그 -->
+  <dialog id="publisherDialog" class="publisher-dialog" aria-labelledby="publisherTitle">
+    <div class="publisher-dialog__content">
+      <header class="publisher-dialog__header">
+        <h2 id="publisherTitle">출판사 선택</h2>
+        <button class="publisher-dialog__close btn btn--icon" aria-label="닫기">×</button>
+      </header>
+      <div class="publisher-dialog__body">
+        <div id="publisherList" class="publisher-list"></div>
+      </div>
+      <footer class="publisher-dialog__footer">
+        <button id="selectAllPublishers" class="btn btn--ghost">모두 선택</button>
+        <button id="clearAllPublishers" class="btn btn--ghost">모두 해제</button>
+        <button id="applyPublisherSelection" class="btn btn--primary">적용</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <!-- 숨겨진 파일 업로드 입력 -->
+  <input type="file" id="pdfInput" accept=".pdf" style="display: none;" />
+
+  <!-- 스크립트 로드 -->
+  <script src="list-core.js"></script>
+  <script>
+    // Cache busting for JS to ensure fresh code during development
+    (function(){
+      try{
+        var t = Date.now();
+        var s = document.createElement('script');
+        s.src = 'app.js?_=' + t;
+        document.body.appendChild(s);
+      }catch(e){ console.warn('failed to inject app.js', e); }
+    })();
+  </script>
+  <script>
+    // Logout helper and logout button wiring
+    function paperscoutLogout() {
+      try {
+        const token = localStorage.getItem('paperscout_auth_token');
+        // best-effort notify backend (no await)
+        if (token) {
+          fetch('http://localhost:3001/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }).catch(()=>{});
+        }
+      } catch (e) {}
+      localStorage.removeItem('paperscout_auth_token');
+      localStorage.removeItem('paperscout_auth_user');
+      window.location.replace('login.html');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const lb = document.getElementById('logoutBtn');
+      if (lb) lb.addEventListener('click', (e) => { e.preventDefault(); paperscoutLogout(); });
+    });
+  </script>
+</body>
+</html>

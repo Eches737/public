@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PaperScout Admin</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .admin-container{max-width:900px;margin:24px auto;padding:16px;background:#fff;border-radius:8px}
+    .field{margin-bottom:12px}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    textarea{width:100%;min-height:120px;font-family:monospace}
+    input[type=text]{width:100%}
+    .row{display:flex;gap:8px}
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <h2>관리자 설정</h2>
+    <div id="who" class="field"></div>
+
+    <div class="field">
+      <label>동기화 허용 (클라이언트 → 서버)</label>
+      <input type="checkbox" id="syncEnabled"> 서버가 클라이언트 동기화를 허용합니다.
+    </div>
+
+    <div class="field">
+      <label>출판사 API 키 (출판사별)</label>
+      <div id="publishersTable"></div>
+      <div style="margin-top:8px">
+        <input type="text" id="newPubId" placeholder="publisher id (예: springer)" style="width:220px"> 
+        <input type="text" id="newPubName" placeholder="출판사 이름 (선택)" style="width:260px"> 
+        <input type="text" id="newPubKey" placeholder="API 키" style="width:260px"> 
+        <button id="addPublisherBtn">추가</button>
+      </div>
+      <small>출판사별로 키를 입력하세요. 변경사항은 `data/admin_config.json`에 저장됩니다.</small>
+    </div>
+
+    <div class="field">
+      <label>DATABASE_URL</label>
+      <input type="text" id="databaseUrl" placeholder="postgres://user:pass@host:5432/dbname">
+      <small>변경 시 서버 재시작이 필요합니다.</small>
+    </div>
+
+    <div class="row field">
+      <button id="saveBtn">저장</button>
+      <button id="migrateBtn">파일 → DB 마이그레이션 실행</button>
+      <button id="refreshBtn">새로고침</button>
+    </div>
+
+    <pre id="out" style="white-space:pre-wrap;background:#f7f7f7;padding:8px;border-radius:6px;max-height:300px;overflow:auto"></pre>
+  </div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
