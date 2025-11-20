@@ -529,17 +529,34 @@ let state = {
   // 출판사 데이터 로드
   async function loadPublishersData() {
     if (!publishersData) {
+      // 우선 서버 엔드포인트(/api/publishers)를 시도하고, 실패하면 정적 파일(publishers.json)을 폴백합니다.
       try {
-        console.log('📚 출판사 데이터 로드 시작...');
-        const response = await fetch('publishers.json');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        console.log('📚 출판사 데이터 로드 시도: /api/publishers');
+        const apiPath = `${window.location.protocol}//${window.location.hostname}:3001/api/publishers`;
+        let response = null;
+        try {
+          response = await fetch(apiPath);
+          if (response && response.ok) {
+            publishersData = await response.json();
+            console.log('📚 출판사 데이터 로드 완료 (서버):', publishersData?.publishers?.length || 0, '개 출판사');
+          } else {
+            console.warn('📚 /api/publishers 응답이 없거나 오류임, 상태:', response && response.status);
+            response = null;
+          }
+        } catch (e) {
+          console.warn('📚 /api/publishers 호출 실패:', e);
+          response = null;
         }
-        
-        publishersData = await response.json();
-        console.log('📚 출판사 데이터 로드 완료:', publishersData?.publishers?.length || 0, '개 출판사');
-        
+
+        if (!publishersData) {
+          // 서버에서 못가져오면 정적 파일을 시도
+          console.log('📚 폴백: publishers.json 로드 시도');
+          const staticResp = await fetch('publishers.json');
+          if (!staticResp.ok) throw new Error(`HTTP error! status: ${staticResp.status}`);
+          publishersData = await staticResp.json();
+          console.log('📚 출판사 데이터 로드 완료 (정적 파일):', publishersData?.publishers?.length || 0, '개 출판사');
+        }
+
         if (!publishersData.publishers || publishersData.publishers.length === 0) {
           console.warn('출판사 데이터가 비어있습니다');
         }
@@ -549,6 +566,7 @@ let state = {
         showToast('출판사 데이터를 불러오는데 실패했습니다.', 'error');
       }
     }
+
     // 서버(프록시)가 지원하는 출판사 목록을 가져와서 클라이언트에서 사용
     try {
       const apiBase = `${window.location.protocol}//${window.location.hostname}:3001`;

@@ -22,6 +22,25 @@ app.use(cors({ origin: ORIGIN }));
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Content Security Policy (개발용)
+// 개발 중 브라우저가 로컬 백엔드(예: :3001)로의 fetch/connect 요청을 차단하지 않도록 허용합니다.
+// 운영 환경에서는 이 설정을 더 엄격하게 구성하세요.
+app.use((req, res, next) => {
+  try {
+    const csp = [
+      "default-src 'self' data: blob: 'unsafe-inline'",
+      "connect-src 'self' http://localhost:3001 ws://localhost:3001",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:"
+    ].join('; ');
+    res.setHeader('Content-Security-Policy', csp);
+  } catch (e) {
+    console.warn('Failed to set CSP header', e);
+  }
+  return next();
+});
+
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const toInt = (v, def) => (isNaN(parseInt(v, 10)) ? def : parseInt(v, 10));
 const isYear = (v) => /^\d{4}$/.test(String(v || '').trim());
@@ -83,7 +102,7 @@ app.get('/api/search', async (req,res,next)=>{
 });
 
 app.get('/api/publishers', async (_req,res)=>{
-  try{ const p=path.join(__dirname,'public','publishers.json'); const text=await fs.readFile(p,'utf8'); res.type('application/json').send(text); }catch(e){ res.status(500).json({ok:false,error:'not found'}); }
+  try{ const p=path.join(__dirname,'publishers.json'); const text=await fs.readFile(p,'utf8'); res.type('application/json').send(text); }catch(e){ res.status(500).json({ok:false,error:'not found'}); }
 });
 
 app.get('/proxy', async (req,res)=>{
@@ -108,7 +127,7 @@ app.get('/api/publisher/search', async (req, res) => {
     const q = String(req.query.q || req.query.query || '');
     if(!pubId) return res.status(400).json({ ok:false, error: 'missing publisher id' });
     // load publisher catalog
-    const pubPath = path.join(__dirname,'public','publishers.json');
+    const pubPath = path.join(__dirname,'publishers.json');
     let catalog = null;
     try{ catalog = JSON.parse(await fs.readFile(pubPath,'utf8')); }catch(e){ catalog = { publishers: [] }; }
     const pub = (catalog.publishers||[]).find(p => String(p.id) === pubId);

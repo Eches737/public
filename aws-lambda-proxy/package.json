@@ -1,0 +1,12 @@
+{
+  "name": "aws-lambda-proxy",
+  "version": "1.0.0",
+  "description": "Simple Lambda proxy for external search API",
+  "main": "index.js",
+  "scripts": {
+    "test": "node -e \"console.log('no tests')\""
+  },
+  "dependencies": {
+    "axios": "^1.4.0"
+  }
+}
