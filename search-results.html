@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Sciflix - 검색 결과</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .search-header {
+      background: var(--color-bg-secondary);
+      border-bottom: 1px solid var(--color-border);
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+    }
+    
+    .search-header__content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .search-header__logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--color-primary);
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    
+    .search-header__form {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+      min-width: 300px;
+    }
+    
+    .search-header__input {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      background: white;
+      min-width: 150px;
+      margin-left: 10rem;
+    }
+    
+    .search-header__select {
+      padding: 0.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      background: white;
+      min-width: 120px;
+    }
+    
+    .search-header__button {
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .search-header__button:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      transform: translateY(-1px);
+    }
+    
+    .search-header__button--secondary {
+      background: white;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    
+    .search-header__button--secondary:hover {
+      background: #f1f5f9;
+      color: #334155;
+      transform: none;
+    }
+    
+    .search-header__query {
+      font-size: 1.1rem;
+      color: var(--color-text-secondary);
+      margin-left: auto;
+    }
+    
+    /* 선택된 출판사 로고 스타일 */
+    .selected-publisher-logos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 0.5rem 0;
+      border-top: 1px solid #e2e8f0;
+      width: 100%;
+    }
+    
+    .selected-publisher-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    .selected-publisher-logo:hover {
+      transform: scale(1.1);
+    }
+    
+    .selected-publisher-logo::after {
+      content: '×';
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ef4444;
+      color: white;
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    
+    .selected-publisher-logo:hover::after {
+      opacity: 1;
+    }
+    
+    /* 메인 레이아웃 */
+    .search-layout {
+      display: flex;
+      min-height: calc(100vh - 200px);
+      max-width: 1400px;
+      margin: 0;
+      padding: 0 1rem;
+      gap: 2rem;
+    }
+    
+    .search-content {
+      flex: 1;
+      min-width: 0; /* flex 아이템이 축소될 수 있도록 */
+    }
+    
+    /* 사이드바 스타일 조정 */
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 2rem;
+      height: fit-content;
+      max-height: calc(100vh - 4rem);
+      overflow-y: auto;
+    }
+    
+    .back-to-search {
+      margin-bottom: 2rem;
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      .search-layout {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+        order: -1; /* 모바일에서 사이드바를 위로 */
+      }
+    }
+
+    /* 검색 결과 카드 스타일 - 초컴팩트 버전 */
+    .result-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      padding: 0;
+      box-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 1px 1px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+      list-style: none;
+      overflow: hidden;
+      position: relative;
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      width: 100%;
+      max-width: none;
+      display: flex;
+      flex-direction: row; /* 명시적으로 수평 배치 */
+      align-items: stretch; /* 헤더와 푸터가 같은 높이로 늘어나도록 */
+      min-height: 180px; /* 최소 높이를 늘려 카드 블록 높이 증가 */
+    }
+
+    .result-card:hover {
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.12),
+        0 2px 4px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+      border-color: #3b82f6;
+    }
+
+    .result-card:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .result-card:hover:before {
+      opacity: 1;
+    }
+
+    .result-card__header {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid #f1f5f9;
+      background: rgba(248, 250, 252, 0.5);
+      position: relative;
+      flex: 1;
+      min-width: 0; /* flex 아이템이 축소될 수 있도록 */
+      border-right: 1px solid #e2e8f0;
+    }
+
+    .result-card__title {
+      margin: 0 0 0.375rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      line-height: 1.3;
+      color: #1e293b;
+    }
+
+    .result-card__link {
+      color: #1e293b;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: block;
+    }
+
+    .result-card__link:hover {
+      color: #3b82f6;
+      text-decoration: underline;
+    }
+
+    .result-card__meta {
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .result-card__journal {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 15px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
+    }
+
+    .result-card__year {
+      background: linear-gradient(135deg, #64748b, #475569);
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 15px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(100, 116, 139, 0.3);
+    }
+
+    .result-card__authors {
+      margin: 0.5rem 0;
+      color: #64748b;
+      font-size: 0.8rem;
+      padding: 0.5rem;
+      background: #f8fafc;
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .result-card__authors-label {
+      font-weight: 600;
+      color: #1e293b;
+      display: inline-block;
+      margin-right: 0.375rem;
+    }
+
+    .result-card__keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.375rem;
+      margin: 0.5rem 0;
+    }
+
+    .result-card__keywords span {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e40af;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      border: 1px solid #93c5fd;
+      transition: all 0.2s ease;
+    }
+
+    .result-card__keywords span:hover {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .result-card__footer {
+      padding: 0.5rem 0.75rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* 중앙 정렬 */
+      gap: 0.5rem;
+      border-top: 1px solid #e2e8f0;
+      flex: 0 0 280px; /* 고정 너비로 오른쪽에 위치 (데스크탑) */
+      height: auto; /* 콘텐츠에 따라 높이 자동 조절 */
+      justify-content: center;
+      margin-top: 2rem; /* 푸터 상단에 여백 추가 */
+    }
+
+    .result-card__actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      align-items: center; /* 액션 영역 가운데 정렬 */
+      width: auto; /* 고정 너비 제거하여 중앙 배치 허용 */
+    }
+
+    .result-card__actions-primary {
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+      justify-content: center; /* 버튼들을 중앙으로 배치 */
+    }
+
+    .result-card__actions-primary .btn--sm {
+      flex: 1;
+    }
+
+    .btn--sm {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      width: 100%;
+      min-width: 0;
+    }
+
+    /* 푸터 내부의 작은 버튼은 중앙 정렬 시 너무 넓어지지 않도록 오버라이드 */
+    .result-card__actions .btn--sm {
+      width: auto;
+      min-width: 120px;
+    }
+
+    .btn--primary {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn--primary:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn--ghost {
+      background: white;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn--ghost:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    /* 출판사 선택 모달 스타일 */
+    .publisher-dialog {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .publisher-dialog[open] {
+      display: flex;
+    }
+
+    .publisher-dialog__content {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .publisher-dialog__header {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .publisher-dialog__header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    .publisher-dialog__close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: white;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .publisher-dialog__close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .publisher-dialog__body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .publisher-dialog__footer {
+      padding: 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+
+    /* 출판사 목록 스타일 - app.js 스타일 적용 */
+    .publisher-list {
+      padding: 25px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .publisher-search-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 15px;
+      border: 2px solid #e1e8ed;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: left;
+      font-size: 14px;
+      color: #333;
+      position: relative;
+      min-height: 50px;
+    }
+
+    .publisher-search-item:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .publisher-search-item.selected {
+      border-color: #27ae60;
+      background: #d5f4e6;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+    }
+
+    .selection-indicator {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #27ae60;
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 10;
+    }
+
+    .publisher-search-logo {
+      font-size: 14px;
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .publisher-search-name {
+      font-weight: 600;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .publisher-access-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      padding: 2px 5px;
+      border-radius: 6px;
+      font-size: 9px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .publisher-access-badge.open {
+      background: #d5f4e6;
+      color: #27ae60;
+    }
+
+    .publisher-access-badge.subscription {
+      background: #fadbd8;
+      color: #e74c3c;
+    }
+
+    .publisher-access-badge.mixed {
+      background: #fef3cd;
+      color: #f39c12;
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 640px) {
+      .publisher-list {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (min-width: 641px) and (max-width: 1024px) {
+      .publisher-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    
+    @media (min-width: 1025px) {
+      .publisher-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* 버튼 스타일 */
+    .btn {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      text-decoration: none;
+    }
+
+    .btn--primary {
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: white;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn--primary:hover {
+      background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn--ghost {
+      background: white;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn--ghost:hover {
+      background: #f1f5f9;
+      color: #334155;
+    }
+
+    .btn--icon {
+      padding: 0.25rem;
+      font-size: 1rem;
+      min-width: auto;
+      width: auto;
+    }
+
+    .btn--small {
+      padding: 0.375rem 0.625rem;
+      font-size: 0.75rem;
+      border-radius: 4px;
+    }
+
+    .user-list-item__title--selected {
+      font-weight: bold;
+      color: #0ea5e9;
+    }    /* 로딩 애니메이션 스타일 */
+    .loading-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--color-text-secondary);
+    }
+    
+    .loading-indicator p {
+      margin: 1rem 0 0 0;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .search-content > h2 {
+      margin-bottom: 2rem;
+      color: #1e293b;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* 활성 필터 칩 스타일 */
+    .chips {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: #f3f4f6;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      color: #374151;
+    }
+    
+    .chip__remove {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 0;
+      font-size: 0.75rem;
+      line-height: 1;
+    }
+    
+    .chip__remove:hover {
+      color: #374151;
+    }
+
+    /* 결과 리스트 컨테이너 */
+    #resultsList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 768px) {
+      .search-header__content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+      
+      .search-header__form {
+        flex-direction: column;
+        gap: 0.5rem;
+        min-width: auto;
+      }
+      
+      .search-header__input,
+      .search-header__select {
+        width: 100%;
+      }
+      
+      .search-header__query {
+        margin-left: 0;
+        text-align: center;
+      }
+      
+      /* 검색 결과 카드 모바일 스타일 */
+      .result-card {
+        flex-direction: column;
+        height: auto;
+        min-width: auto;
+        align-items: stretch;
+      }
+      
+      .result-card__header {
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      
+      .result-card__footer {
+        flex: none;
+        width: 100%;
+        height: auto;
+        padding: 1rem 0.75rem;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="search-header">
+    <div class="search-header__content">
+      <a href="/" class="search-header__logo">📚 Sciflix</a>
+      
+      <form id="searchForm" class="search-header__form" novalidate>
+        <input id="q" name="q" type="text" class="search-header__input" placeholder="예: machine learning, COVID-19, CRISPR" autocomplete="off" />
+        <select id="sort" name="sort" class="search-header__select">
+          <option value="relevance">관련도순</option>
+          <option value="year-desc">최신순</option>
+          <option value="year-asc">오래된순</option>
+          <option value="impact-desc">임팩트 팩터순</option>
+          <option value="citations-desc">인용순</option>
+        </select>
+        <button type="button" id="publisherSearchBtn" class="search-header__button search-header__button--secondary">출판사</button>
+        <button type="submit" class="search-header__button">검색</button>
+      </form>
+      
+      <!-- 프록시 사용 토글 -->
+      <div style="display:flex;align-items:center;gap:0.75rem">
+        <label style="font-size:0.9rem;color:#374151;display:flex;align-items:center;gap:0.5rem;">
+          <input type="checkbox" id="useProxyToggle" />
+          <span>서버 프록시 사용</span>
+        </label>
+        <button id="manageApiKeysBtn" class="search-header__button search-header__button--secondary" style="margin-left:0.5rem">API 키</button>
+      </div>
+
+      <!-- 선택된 출판사 로고 표시 -->
+      <div id="selectedPublisherLogos" class="selected-publisher-logos"></div>
+    </div>
+  </header>
+
+  <main class="search-layout">
+    <!-- 사이드바 -->
+    <aside id="sidebar" class="sidebar" aria-label="사용자 목록">
+      <header class="sidebar__header">
+        <h2 class="sidebar__title">내 목록</h2>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button id="sidebarToggle" class="btn btn--icon" aria-expanded="true" aria-controls="sidebar">☰</button>
+        </div>
+      </header>
+      <div class="sidebar__body">
+        <label class="sr-only" for="newListName">새 목록 이름</label>
+        <div class="sidebar__adder">
+          <input id="newListName" type="text" class="control" placeholder="새 목록 이름" />
+          <button id="addListBtn" class="btn btn--primary">추가</button>
+        </div>
+        <ul id="userLists" class="user-lists" aria-live="polite"></ul>
+      </div>
+    </aside>
+
+    <!-- 검색 결과 콘텐츠 -->
+    <div class="search-content">
+      <!-- 활성 필터 칩 -->
+      <section id="activeChips" class="chips" aria-live="polite"></section>
+
+      <section id="resultsSection" class="results" aria-live="polite">
+        <!-- 로딩 애니메이션 -->
+        <div id="loadingIndicator" class="loading-indicator" hidden>
+          <div class="loading-spinner"></div>
+          <p>검색 중...</p>
+        </div>
+        
+        <header class="results__header">
+          <div id="resultsMeta" class="results__meta"></div>
+        </header>
+        <ul id="resultsList" class="results__list"></ul>
+        <div id="pagination" class="pagination" aria-label="페이지 네비게이션"></div>
+      </section>
+
+      <div id="empty" class="empty" hidden>
+        <div class="empty__content">
+          <div class="empty__icon">🔍</div>
+          <h3 class="empty__title">검색 결과가 없습니다</h3>
+          <p class="empty__description">다른 검색어를 시도해보세요.</p>
+          <a href="/" class="btn btn--primary">새로운 검색</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 출판사 선택 다이얼로그 -->
+  <dialog id="publisherDialog" class="publisher-dialog" aria-labelledby="publisherTitle" style="border: none; padding: 0; margin: 0; width: 100vw; height: 100vh; max-width: none; max-height: none;">
+    <div class="publisher-dialog__content">
+      <header class="publisher-dialog__header">
+        <h2 id="publisherTitle">출판사 선택</h2>
+        <button class="publisher-dialog__close btn btn--icon" aria-label="닫기">×</button>
+      </header>
+      <div class="publisher-dialog__body">
+        <div id="proxyStatus" style="margin-bottom:10px;font-size:0.95rem;color:#374151"></div>
+        <div id="publisherList" class="publisher-list"></div>
+      </div>
+      <footer class="publisher-dialog__footer">
+        <button id="selectAllPublishers" class="btn btn--ghost">모두 선택</button>
+        <button id="clearAllPublishers" class="btn btn--ghost">모두 해제</button>
+        <button id="applyPublisherSelection" class="btn btn--primary">적용</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <!-- API 키 관리 다이얼로그 -->
+  <dialog id="apiKeyDialog" class="publisher-dialog" aria-labelledby="apiKeyTitle" style="border: none; padding: 0; margin: 0; width: 100vw; height: 100vh; max-width: none; max-height: none;">
+    <div class="publisher-dialog__content">
+      <header class="publisher-dialog__header">
+        <h2 id="apiKeyTitle">API 키 관리</h2>
+        <button class="publisher-dialog__close btn btn--icon" aria-label="닫기">×</button>
+      </header>
+      <div class="publisher-dialog__body">
+        <p style="margin:0 0 12px 0;color:#374151">각 출판사별 API 키를 등록하면 브라우저에서 직접 API 호출 시 인증 토큰으로 사용됩니다. (개발용)</p>
+        <div id="apiKeyList" style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto"></div>
+      </div>
+      <footer class="publisher-dialog__footer">
+        <button id="closeApiKeyDialog" class="btn btn--ghost">닫기</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <!-- PDF 파일 업로드용 숨겨진 input -->
+  <input type="file" id="uploadPdf" accept=".pdf" style="display: none;" />
+  <template id="resultItemTemplate">
+    <li class="result-item result-card" draggable="true">
+      <div class="result-card__header">
+        <h3 class="result-card__title">
+          <span data-field="url" class="result-card__link"></span>
+        </h3>
+        <div class="result-card__authors">
+          <span class="result-card__authors-label">저자:</span>
+          <span data-field="authors"></span>
+        </div>
+        <div class="result-card__keywords" data-field="keywords"></div>
+      </div>
+      
+      <div class="result-card__footer">
+        <div class="result-card__meta">
+          <span class="result-card__journal" data-field="journal"></span>
+          <span class="result-card__year" data-field="year"></span>
+        </div>
+        <div class="result-card__actions">
+          <div class="result-card__actions-primary">
+            <button class="btn btn--primary btn--sm" data-action="add-to-list">
+              📚 목록에 추가
+            </button>
+            <button class="btn btn--ghost btn--sm" data-action="view-details">
+              � 상세보기
+            </button>
+          </div>
+          <button class="btn btn--ghost btn--sm" data-action="copy-doi">
+            DOI 복사
+          </button>
+        </div>
+      </div>
+    </li>
+  </template>
+
+  <script src="list-core.js"></script>
+  <script src="search-results.js"></script>
+</body>
+</html>
