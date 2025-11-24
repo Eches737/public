@@ -3,57 +3,71 @@ name: Deploy proxy Lambda
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'aws-lambda-proxy/**'
 
 jobs:
-  deploy-proxy:
-    name: Deploy aws-lambda-proxy
+  deploy-proxy-lambda:
+    name: Deploy proxy Lambda
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-
-      - name: Install lambda deps (if any)
-        run: |
-          cd aws-lambda-proxy || exit 0
-          if [ -f package.json ]; then npm ci; fi
-
-      - name: Zip function
-        run: |
-          rm -f proxy-deploy.zip || true
-          cd aws-lambda-proxy
-          zip -r ../proxy-deploy.zip . -x "node_modules/aws-sdk/**" || true
+          cache: 'npm'
+          cache-dependency-path: aws-lambda-proxy/package-lock.json
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Update Lambda function code
-        env:
-          LAMBDA_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+      - name: Install lambda deps (if any)
+        working-directory: aws-lambda-proxy
+        shell: bash
         run: |
-          if [ -z "$LAMBDA_NAME" ]; then echo "LAMBDA_FUNCTION_NAME secret is required"; exit 1; fi
-          aws lambda update-function-code --function-name "$LAMBDA_NAME" --zip-file fileb://proxy-deploy.zip
-
-      - name: Post-deploy health check (optional)
-        if: ${{ secrets.HEALTHCHECK_URL != '' }}
-        env:
-          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
-        run: |
-          echo "Waiting 5s for deployment to settle..."
-          sleep 5
-          echo "Calling healthcheck URL: ${HEALTHCHECK_URL}?userSub=test-user-1"
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${HEALTHCHECK_URL}?userSub=test-user-1") || true
-          echo "Healthcheck returned status: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "Healthcheck failed (status $HTTP_STATUS). Failing workflow."; exit 1
+          if [ ! -f package.json ]; then
+            echo "No package.json here; skipping"; exit 0
           fi
+
+          if [ -f package-lock.json ]; then
+            # 잠금파일 버전에 맞춰 npm 업그레이드(락 v3는 npm>=9 필요)
+            LOCKVER=$(node -p "try{require('./package-lock.json').lockfileVersion}catch(e){''}")
+            if [ "$LOCKVER" = "3" ]; then
+              npm -v | grep -qE '^9|^10' || npm i -g npm@9
+            fi
+            npm ci --omit=dev
+          elif [ -f yarn.lock ]; then
+            corepack enable
+            corepack yarn install --immutable
+          elif [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            corepack pnpm install --frozen-lockfile
+          else
+            echo "No lockfile found; falling back to npm install"
+            npm install --no-audit --no-fund
+          fi
+
+      - name: Create deployment package
+        run: |
+          rm -f function.zip
+          if [ -d aws-lambda-proxy ]; then
+            (cd aws-lambda-proxy && zip -r ../function.zip .)
+          else
+            zip -r function.zip . -x .github/** node_modules/** dist/** *.zip
+          fi
+
+      - name: Update Lambda function code
+        run: |
+          aws lambda update-function-code --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}" --zip-file fileb://function.zip
+
+      - name: Optional healthcheck
+        if: ${{ secrets.HEALTHCHECK_URL != '' }}
+        run: |
+          echo "Running healthcheck against ${{ secrets.HEALTHCHECK_URL }}"
+          curl -fsS --max-time 10 "${{ secrets.HEALTHCHECK_URL }}" || (echo "Healthcheck failed"; exit 1)
