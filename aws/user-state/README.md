@@ -34,7 +34,18 @@ sam build --template-file template.yaml
 sam deploy --guided
 ```
 
-배포 과정에서 스택 이름(stack name), 리전(region), 권한(CAPABILITY_IAM) 등을 물어봅니다. 템플릿은 내부적으로 S3 버킷을 생성합니다. 버킷 이름은 `${StackName}-user-state-bucket` 형태가 됩니다.
+배포 과정에서 스택 이름(stack name), 리전(region), 권한(CAPABILITY_IAM) 등을 물어봅니다.
+
+버킷 사용 옵션
+- 템플릿은 기본적으로 스택 이름을 기반으로 새 S3 버킷을 생성합니다 (버킷 이름: `${StackName}-user-state-bucket`).
+- 이미 존재하는 버킷을 사용하려면 `ExternalBucketName` 파라미터에 버킷 이름을 지정해 배포하세요. 그러면 SAM은 새 버킷을 생성하지 않고 제공한 버킷을 사용합니다.
+
+예: non-interactive로 기존 버킷 `my-existing-bucket`을 사용해 배포하려면:
+
+```bash
+sam deploy --stack-name ref-paper-user-state --parameter-overrides ExternalBucketName=my-existing-bucket --capabilities CAPABILITY_IAM --no-confirm-changeset
+```
+
 
 비대화형 배포 예 (사전 값 설정 시)
 

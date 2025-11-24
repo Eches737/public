@@ -1,10 +1,21 @@
+
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: SAM template for UserState Lambda that reads/writes users/{userSub}/sidebar.json in S3
 
+Parameters:
+  ExternalBucketName:
+    Type: String
+    Default: ""
+    Description: "Optional existing S3 bucket name to use for user state. If empty, SAM will create a bucket named <StackName>-user-state-bucket."
+
+Conditions:
+  CreateBucket: !Equals [ !Ref ExternalBucketName, "" ]
+
 Resources:
   UserStateBucket:
     Type: AWS::S3::Bucket
+    Condition: CreateBucket
     Properties:
       BucketName: !Sub '${AWS::StackName}-user-state-bucket'
 
@@ -16,14 +27,17 @@ Resources:
       CodeUri: ./aws/user-state/
       Environment:
         Variables:
-          BUCKET_NAME: !Ref UserStateBucket
+          BUCKET_NAME: !If [ CreateBucket, !Ref UserStateBucket, !Ref ExternalBucketName ]
       Policies:
         - Statement:
             - Effect: Allow
               Action:
                 - s3:GetObject
                 - s3:PutObject
-              Resource: !Sub arn:aws:s3:::${UserStateBucket}/*
+              Resource: !If
+                - CreateBucket
+                - !Sub arn:aws:s3:::${UserStateBucket}/*
+                - !Sub arn:aws:s3:::${ExternalBucketName}/*
       Events:
         UserStateApi:
           Type: Api
