@@ -1,3 +1,31 @@
+# aws-lambda-proxy — Deploying the proxy Lambda
+
+This directory contains the proxy Lambda code (`index.js`) which previously handled external API proxying and now also routes `/user/state` to a local handler when present.
+
+Automatic deploy via GitHub Actions
+- A workflow `.github/workflows/deploy-proxy-lambda.yml` is included. It will run on pushes to `main` that change files under `aws-lambda-proxy/**`.
+
+Before using the workflow, set the following repository secrets in GitHub settings:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION` (e.g. `ap-northeast-2`)
+- `LAMBDA_FUNCTION_NAME` — the name (or ARN) of the existing Lambda function to update
+
+Once secrets are set, push to `main` (or open a PR and merge). The workflow will zip the `aws-lambda-proxy` folder and call `aws lambda update-function-code` to update the function.
+
+Manual deploy (local)
+If you prefer to update the Lambda manually from your machine:
+
+```bash
+cd aws-lambda-proxy
+zip -r ../proxy-deploy.zip . -x "node_modules/aws-sdk/**"
+aws lambda update-function-code --function-name <YOUR_LAMBDA_NAME> --zip-file fileb://../proxy-deploy.zip --region <YOUR_REGION>
+```
+
+Notes
+- The workflow and manual commands assume the Lambda uses the contents of this folder as its handler root. If your Lambda was created from a different artifact or has additional layers, adapt accordingly.
+- For zero-downtime and safer deploys consider publishing a new version and updating aliases.
 # AWS Lambda Proxy (외부 검색 API 연동 예제)
 
 이 폴더는 외부 검색 API를 Lambda 함수로 프록시하는 예제입니다. API 키는 서버(또는 Secrets Manager)에 보관하고, 프론트엔드는 이 Lambda 엔드포인트를 호출합니다.

@@ -1,0 +1,45 @@
+name: Deploy proxy Lambda
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'aws-lambda-proxy/**'
+
+jobs:
+  deploy-proxy:
+    name: Deploy aws-lambda-proxy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install lambda deps (if any)
+        run: |
+          cd aws-lambda-proxy || exit 0
+          if [ -f package.json ]; then npm ci; fi
+
+      - name: Zip function
+        run: |
+          rm -f proxy-deploy.zip || true
+          cd aws-lambda-proxy
+          zip -r ../proxy-deploy.zip . -x "node_modules/aws-sdk/**" || true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update Lambda function code
+        env:
+          LAMBDA_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+        run: |
+          if [ -z "$LAMBDA_NAME" ]; then echo "LAMBDA_FUNCTION_NAME secret is required"; exit 1; fi
+          aws lambda update-function-code --function-name "$LAMBDA_NAME" --zip-file fileb://proxy-deploy.zip
