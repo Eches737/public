@@ -1,0 +1,148 @@
+// pdf-ai.js — UI glue for PDF viewer AI sidebar (fallbacks to window.AIClient when available)
+(function(){
+  'use strict';
+
+  function log(){ try{ console.log.apply(console, arguments); }catch(e){} }
+
+  async function callSummarize(text){
+    if (window.AIClient && typeof window.AIClient.summarizeText === 'function'){
+      return window.AIClient.summarizeText(text);
+    }
+    // fallback (same endpoint)
+    const API_BASE = "https://abc123.execute-api.ap-northeast-2.amazonaws.com";
+    const res = await fetch(`${API_BASE}/ai/summarize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) throw new Error('AI 요청 실패');
+    const data = await res.json();
+    return data.summary;
+  }
+
+  // ensure sidebar textarea exists
+  const aiSidebarBody = document.querySelector('#aiSidebar .sidebar__body');
+  let textarea = document.getElementById('aiInput');
+  if (aiSidebarBody && !textarea) {
+    textarea = document.createElement('textarea');
+    textarea.id = 'aiInput';
+    textarea.placeholder = '논문 텍스트 일부를 붙여넣고 요약하세요.';
+    textarea.style.width = '100%';
+    textarea.style.height = '100px';
+    textarea.style.marginBottom = '8px';
+    const modelSelect = document.getElementById('aiModel');
+    if (modelSelect && modelSelect.parentNode) modelSelect.parentNode.parentNode.insertBefore(textarea, modelSelect.parentNode.nextSibling);
+    else aiSidebarBody.insertBefore(textarea, aiSidebarBody.firstChild);
+  }
+
+  const summarizeBtn = document.getElementById('summarizeBtn');
+  const aiResult = document.getElementById('aiResult');
+  const aiStatus = document.getElementById('aiStatus');
+
+  if (summarizeBtn) {
+    summarizeBtn.addEventListener('click', async function(){
+      const text = (textarea && textarea.value) ? textarea.value.trim() : '';
+      if (!text) {
+        if (aiStatus) aiStatus.textContent = '요약할 텍스트를 입력하세요.';
+        return;
+      }
+      if (aiStatus) aiStatus.textContent = '요약 중...';
+      summarizeBtn.disabled = true;
+      if (aiResult) aiResult.textContent = '';
+      try {
+        const summary = await callSummarize(text);
+        if (aiResult) aiResult.textContent = summary;
+        if (aiStatus) aiStatus.textContent = '요약 완료';
+      } catch (err) {
+        log('AI 요약 실패', err);
+        if (aiStatus) aiStatus.textContent = 'AI 요약 중 오류 발생';
+        alert('AI 요약 요청 실패: ' + (err && err.message));
+      } finally {
+        summarizeBtn.disabled = false;
+      }
+    });
+  }
+
+  // Text extraction: extract visible PDF text via PDF.js when available
+  const extractBtn = document.getElementById('extractBtn');
+  async function extractPdfText() {
+    try {
+      if (!window.PDFViewer || typeof window.PDFViewer.getPdfDoc !== 'function') {
+        if (aiStatus) aiStatus.textContent = 'PDF.js 문서가 준비되지 않았습니다.';
+        return '';
+      }
+
+      const pdfDoc = window.PDFViewer.getPdfDoc();
+      if (!pdfDoc) {
+        if (aiStatus) aiStatus.textContent = '먼저 PDF 파일을 열어주세요.';
+        return '';
+      }
+
+      const total = pdfDoc.numPages || 0;
+      if (aiStatus) aiStatus.textContent = `텍스트 추출 중... (0/${total})`;
+
+      let acc = [];
+      // limit extracted chars to avoid huge memory usage
+      const MAX_CHARS = 200000; // ~200KB
+      let charCount = 0;
+
+      for (let p = 1; p <= total; p++) {
+        try {
+          const page = await pdfDoc.getPage(p);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(i => i.str).join(' ');
+          if (pageText) {
+            acc.push(pageText);
+            charCount += pageText.length;
+          }
+        } catch (pageErr) {
+          console.warn('페이지 추출 실패', p, pageErr);
+        }
+
+        if (aiStatus) aiStatus.textContent = `텍스트 추출 중... (${p}/${total})`;
+
+        if (charCount > MAX_CHARS) {
+          acc.push('\n…문서의 나머지 내용은 생략되었습니다…\n');
+          break;
+        }
+      }
+
+      const resultText = acc.join('\n\n');
+      if (textarea) textarea.value = resultText;
+      if (aiStatus) aiStatus.textContent = `텍스트 추출 완료 (${Math.min(charCount, MAX_CHARS)} chars)`;
+      return resultText;
+    } catch (err) {
+      console.error('PDF 텍스트 추출 실패', err);
+      if (aiStatus) aiStatus.textContent = 'PDF 텍스트 추출 실패';
+      return '';
+    }
+  }
+
+  if (extractBtn) {
+    extractBtn.addEventListener('click', async function(){
+      extractBtn.disabled = true;
+      try {
+        const extracted = await extractPdfText();
+        // 자동 요약 흐름: 추출한 텍스트가 있으면 바로 요약 요청
+        if (extracted && extracted.trim().length > 0) {
+          if (aiStatus) aiStatus.textContent = '추출 완료 — 요약 시작...';
+          try {
+            summarizeBtn.disabled = true;
+            const summary = await callSummarize(extracted);
+            if (aiResult) aiResult.textContent = summary;
+            if (aiStatus) aiStatus.textContent = '요약 완료';
+          } catch (summErr) {
+            console.error('자동 요약 실패', summErr);
+            if (aiStatus) aiStatus.textContent = '자동 요약 실패';
+            alert('자동 요약 중 오류가 발생했습니다: ' + (summErr && summErr.message));
+          } finally {
+            summarizeBtn.disabled = false;
+          }
+        }
+      } finally {
+        extractBtn.disabled = false;
+      }
+    });
+  }
+
+})();

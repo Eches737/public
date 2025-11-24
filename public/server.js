@@ -10,6 +10,9 @@ import fs from 'fs/promises';
 import crypto from 'crypto';
 import os from 'os';
 import argon2 from 'argon2';
+import { URLSearchParams } from 'url';
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -383,6 +386,102 @@ app.get('/api/auth/verify', (req,res)=>{
     if(!payload) return res.status(401).json({ ok:false, error:'invalid or expired token' });
     return res.json({ ok:true, user: payload.user });
   }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
+});
+
+// Token exchange endpoint for Authorization Code (PKCE)
+app.post('/auth/callback', express.json(), async (req, res) => {
+  try {
+    const { code, code_verifier } = req.body || {};
+    if (!code) return res.status(400).json({ ok: false, error: 'missing code' });
+
+    const COGNITO_DOMAIN = process.env.COGNITO_DOMAIN; // e.g. your-domain.auth.us-east-1.amazoncognito.com
+    const CLIENT_ID = process.env.COGNITO_CLIENT_ID;
+    const REDIRECT_URI = process.env.COGNITO_REDIRECT_URI; // must match app client setting
+    if (!COGNITO_DOMAIN || !CLIENT_ID || !REDIRECT_URI) {
+      console.error('Cognito env not configured');
+      return res.status(500).json({ ok: false, error: 'server not configured' });
+    }
+
+    const tokenUrl = `https://${COGNITO_DOMAIN}/oauth2/token`;
+    const params = new URLSearchParams();
+    params.set('grant_type', 'authorization_code');
+    params.set('client_id', CLIENT_ID);
+    params.set('code', code);
+    params.set('redirect_uri', REDIRECT_URI);
+    if (code_verifier) params.set('code_verifier', code_verifier);
+
+    const r = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    });
+
+    if (!r.ok) {
+      const tb = await r.text();
+      console.error('Token endpoint error', r.status, tb);
+      return res.status(502).json({ ok: false, error: 'token exchange failed', detail: tb });
+    }
+
+    const data = await r.json();
+    // set tokens as HttpOnly cookies (access_token, id_token)
+    const secure = (process.env.NODE_ENV === 'production');
+    if (data.id_token) res.cookie('id_token', data.id_token, { httpOnly: true, secure });
+    if (data.access_token) res.cookie('access_token', data.access_token, { httpOnly: true, secure });
+    if (data.refresh_token) res.cookie('refresh_token', data.refresh_token, { httpOnly: true, secure });
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error('auth callback failed', e);
+    return res.status(500).json({ ok: false, error: String(e) });
+  }
+});
+
+// JWT verification middleware using Cognito JWKS
+const COGNITO_REGION = process.env.COGNITO_REGION || '';
+const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID || '';
+const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID || process.env.COGNITO_APP_CLIENT_ID || '';
+const COGNITO_ISSUER = (COGNITO_REGION && COGNITO_USER_POOL_ID) ? `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}` : null;
+
+let jwks = null;
+if (COGNITO_ISSUER) {
+  const jwksUri = `${COGNITO_ISSUER}/.well-known/jwks.json`;
+  jwks = jwksClient({ jwksUri, cache: true, cacheMaxEntries: 5, cacheMaxAge: 600000 });
+}
+
+function getKey(header, callback) {
+  if (!jwks) return callback(new Error('JWKS not configured'));
+  jwks.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err);
+    const pub = key.getPublicKey();
+    callback(null, pub);
+  });
+}
+
+function verifyJwtMiddleware(req, res, next) {
+  try {
+    const h = req.headers['authorization'] || '';
+    const m = String(h).match(/^Bearer\s+(.+)$/i);
+    if (!m) return res.status(401).json({ ok: false, error: 'missing auth' });
+    const token = m[1];
+    if (!COGNITO_ISSUER || !COGNITO_CLIENT_ID) return res.status(500).json({ ok: false, error: 'server not configured for token verification' });
+
+    jwt.verify(token, getKey, {
+      audience: COGNITO_CLIENT_ID,
+      issuer: COGNITO_ISSUER
+    }, (err, payload) => {
+      if (err) return res.status(401).json({ ok: false, error: 'invalid token', detail: err.message });
+      req.user = payload;
+      next();
+    });
+  } catch (e) {
+    console.error('verifyToken error', e);
+    return res.status(500).json({ ok: false, error: String(e) });
+  }
+}
+
+// Example protected route
+app.get('/api/protected', verifyJwtMiddleware, (req, res) => {
+  return res.json({ ok: true, user: req.user });
 });
 
 app.post('/api/auth/logout', (req,res)=>{

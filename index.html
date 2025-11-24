@@ -366,9 +366,28 @@
       <div class="site-header__actions">
         <button id="publishersBtn" class="btn btn--ghost" type="button" title="통합 출판사 검색">📚 출판사검색</button>
         <button id="helpOpen" class="btn btn--ghost" type="button" aria-haspopup="dialog" aria-controls="helpDialog">❓</button>
+        <button id="loginBtn" class="btn btn--primary" type="button" title="로그인">로그인</button>
       </div>
     </div>
   </header>
+
+  <script>
+    // Wire the header login button to the Auth route (works before React mounts)
+    (function() {
+      try {
+        var btn = document.getElementById('loginBtn');
+        if (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            // redirect to the auth entrypoint; proxy or hosted UI will handle PKCE flow
+            window.location.href = '/auth/login';
+          });
+        }
+      } catch (err) {
+        console.warn('login button wiring failed', err);
+      }
+    })();
+  </script>
 
   <main class="site-main">
     <div class="layout">
