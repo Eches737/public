@@ -43,3 +43,17 @@ jobs:
         run: |
           if [ -z "$LAMBDA_NAME" ]; then echo "LAMBDA_FUNCTION_NAME secret is required"; exit 1; fi
           aws lambda update-function-code --function-name "$LAMBDA_NAME" --zip-file fileb://proxy-deploy.zip
+
+      - name: Post-deploy health check (optional)
+        if: ${{ secrets.HEALTHCHECK_URL != '' }}
+        env:
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          echo "Waiting 5s for deployment to settle..."
+          sleep 5
+          echo "Calling healthcheck URL: ${HEALTHCHECK_URL}?userSub=test-user-1"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${HEALTHCHECK_URL}?userSub=test-user-1") || true
+          echo "Healthcheck returned status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "Healthcheck failed (status $HTTP_STATUS). Failing workflow."; exit 1
+          fi

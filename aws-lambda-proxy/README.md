@@ -2,15 +2,16 @@
 
 This directory contains the proxy Lambda code (`index.js`) which previously handled external API proxying and now also routes `/user/state` to a local handler when present.
 
-Automatic deploy via GitHub Actions
-- A workflow `.github/workflows/deploy-proxy-lambda.yml` is included. It will run on pushes to `main` that change files under `aws-lambda-proxy/**`.
-
-Before using the workflow, set the following repository secrets in GitHub settings:
-
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `AWS_REGION` (e.g. `ap-northeast-2`)
-- `LAMBDA_FUNCTION_NAME` — the name (or ARN) of the existing Lambda function to update
+ Automatic deploy via GitHub Actions
+ - A workflow `.github/workflows/deploy-proxy-lambda.yml` is included. It will run on pushes to `main` that change files under `aws-lambda-proxy/**`.
+ 
+ Before using the workflow, set the following repository secrets in GitHub settings:
+ 
+ - `AWS_ACCESS_KEY_ID`
+ - `AWS_SECRET_ACCESS_KEY`
+ - `AWS_REGION` (e.g. `ap-northeast-2`)
+ - `LAMBDA_FUNCTION_NAME` — the name (or ARN) of the existing Lambda function to update
+ - `HEALTHCHECK_URL` (optional) — If you set this secret to your API Gateway user-state endpoint (for example `https://xyz.execute-api.ap-northeast-2.amazonaws.com/user/state`), the workflow will call `${HEALTHCHECK_URL}?userSub=test-user-1` after deploy and fail if the response is not HTTP 200. This is useful to detect deployment/runtime errors early.
 
 Once secrets are set, push to `main` (or open a PR and merge). The workflow will zip the `aws-lambda-proxy` folder and call `aws lambda update-function-code` to update the function.
 
