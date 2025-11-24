@@ -371,6 +371,24 @@
     </div>
   </header>
 
+  <script>
+    // Wire the header login button to the Auth route (works before React mounts)
+    (function() {
+      try {
+        var btn = document.getElementById('loginBtn');
+        if (btn) {
+          btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            // redirect to the auth entrypoint; proxy or hosted UI will handle PKCE flow
+            window.location.href = '/auth/login';
+          });
+        }
+      } catch (err) {
+        console.warn('login button wiring failed', err);
+      }
+    })();
+  </script>
+
   <main class="site-main">
     <div class="layout">
       <aside id="sidebar" class="sidebar" aria-label="사용자 목록">
