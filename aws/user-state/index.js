@@ -60,8 +60,9 @@ exports.handler = async (event) => {
     if (method === 'OPTIONS') return { statusCode: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' } };
 
     if (method === 'GET') {
-      const userSub = event.queryStringParameters?.userSub;
-      if (!userSub) return jsonResponse(400, { error: 'userSub query required' });
+      // Accept userSub from query (legacy) or from authorizer (preferred)
+      const userSub = event.queryStringParameters?.userSub || event.requestContext?.authorizer?.jwt?.claims?.sub || event.requestContext?.authorizer?.claims?.sub;
+      if (!userSub) return jsonResponse(400, { error: 'userSub query required or missing from authorizer' });
 
       const key = `users/${userSub}/sidebar.json`;
       try {
@@ -77,8 +78,10 @@ exports.handler = async (event) => {
 
     if (method === 'POST') {
       const body = event.body ? JSON.parse(event.body) : {};
-      const { userSub, sidebar, papers } = body;
-      if (!userSub) return jsonResponse(400, { error: 'userSub required in body' });
+      const { sidebar, papers } = body;
+      // userSub may come from body (legacy) or from authorizer JWT claims
+      const userSub = body.userSub || event.requestContext?.authorizer?.jwt?.claims?.sub || event.requestContext?.authorizer?.claims?.sub;
+      if (!userSub) return jsonResponse(400, { error: 'userSub required in body or must be present in authorizer claims' });
 
       const key = `users/${userSub}/sidebar.json`;
       const payload = JSON.stringify({ sidebar, papers });
