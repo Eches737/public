@@ -1,27 +1,28 @@
 import { useEffect, useState } from "react";
-import './App.css';
 import { getUserState, saveUserState } from "./api/userState";
-
-const USER_SUB = "test-user-1";
 
 function App() {
   const [sidebar, setSidebar] = useState<any>({ items: [] });
 
+  // 처음 로딩할 때 S3에서 사용자 상태 읽어오기
   useEffect(() => {
-    getUserState(USER_SUB)
+    getUserState()
       .then((data) => setSidebar(data.sidebar))
-      .catch((e) => console.error(e));
+      .catch((e) => {
+        console.error(e);
+      });
   }, []);
 
-  const handleAddItem = async () => {
-    const newSidebar = {
+  const handleAdd = async () => {
+    const updated = {
       ...sidebar,
-      items: [...(sidebar.items || []), { id: Date.now(), label: "새 항목" }]
+      items: [...(sidebar.items || []), { id: Date.now(), label: "새 항목" }],
     };
-    setSidebar(newSidebar);
+
+    setSidebar(updated);
 
     try {
-      await saveUserState(USER_SUB, newSidebar, { items: [] });
+      await saveUserState(updated, { items: [] });
     } catch (e) {
       alert("저장 실패");
     }
@@ -29,8 +30,8 @@ function App() {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h1>Ref Paper – User State Test</h1>
-      <button onClick={handleAddItem}>사이드바 항목 추가 + 저장</button>
+      <h1>Ref Paper – 사용자 상태 테스트</h1>
+      <button onClick={handleAdd}>사이드바 항목 추가 + 저장</button>
 
       <pre style={{ marginTop: "1rem" }}>
         {JSON.stringify(sidebar, null, 2)}
