@@ -1,5 +1,13 @@
 const axios = require('axios');
 const qs = require('querystring');
+// Import local user-state handler so we can route /user/state to it without separate deployment
+let userStateHandler = null;
+try {
+  userStateHandler = require('../user-state/index.js').handler;
+} catch (e) {
+  // not fatal — if the file isn't present, proxy will still handle other routes
+  console.warn('user-state handler not available:', e.message);
+}
 
 async function handleSearch(event) {
   const q = event.queryStringParameters?.q || '';
@@ -83,6 +91,18 @@ exports.handler = async (event) => {
 
   if (path.startsWith('/auth/callback') && method === 'POST') {
     return handleAuthCallback(event);
+  }
+
+  // Route /user/state to the local user-state handler if available
+  if (path.startsWith('/user/state')) {
+    if (userStateHandler) {
+      return userStateHandler(event);
+    }
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: 'user-state handler not deployed' })
+    };
   }
 
   // default: search proxy if query param present
