@@ -63,4 +63,70 @@
     });
   }
 
+  // Text extraction: extract visible PDF text via PDF.js when available
+  const extractBtn = document.getElementById('extractBtn');
+  async function extractPdfText() {
+    try {
+      if (!window.PDFViewer || typeof window.PDFViewer.getPdfDoc !== 'function') {
+        if (aiStatus) aiStatus.textContent = 'PDF.js 문서가 준비되지 않았습니다.';
+        return '';
+      }
+
+      const pdfDoc = window.PDFViewer.getPdfDoc();
+      if (!pdfDoc) {
+        if (aiStatus) aiStatus.textContent = '먼저 PDF 파일을 열어주세요.';
+        return '';
+      }
+
+      const total = pdfDoc.numPages || 0;
+      if (aiStatus) aiStatus.textContent = `텍스트 추출 중... (0/${total})`;
+
+      let acc = [];
+      // limit extracted chars to avoid huge memory usage
+      const MAX_CHARS = 200000; // ~200KB
+      let charCount = 0;
+
+      for (let p = 1; p <= total; p++) {
+        try {
+          const page = await pdfDoc.getPage(p);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(i => i.str).join(' ');
+          if (pageText) {
+            acc.push(pageText);
+            charCount += pageText.length;
+          }
+        } catch (pageErr) {
+          console.warn('페이지 추출 실패', p, pageErr);
+        }
+
+        if (aiStatus) aiStatus.textContent = `텍스트 추출 중... (${p}/${total})`;
+
+        if (charCount > MAX_CHARS) {
+          acc.push('\n…문서의 나머지 내용은 생략되었습니다…\n');
+          break;
+        }
+      }
+
+      const resultText = acc.join('\n\n');
+      if (textarea) textarea.value = resultText;
+      if (aiStatus) aiStatus.textContent = `텍스트 추출 완료 (${Math.min(charCount, MAX_CHARS)} chars)`;
+      return resultText;
+    } catch (err) {
+      console.error('PDF 텍스트 추출 실패', err);
+      if (aiStatus) aiStatus.textContent = 'PDF 텍스트 추출 실패';
+      return '';
+    }
+  }
+
+  if (extractBtn) {
+    extractBtn.addEventListener('click', async function(){
+      extractBtn.disabled = true;
+      try {
+        await extractPdfText();
+      } finally {
+        extractBtn.disabled = false;
+      }
+    });
+  }
+
 })();
