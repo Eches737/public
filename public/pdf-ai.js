@@ -122,7 +122,23 @@
     extractBtn.addEventListener('click', async function(){
       extractBtn.disabled = true;
       try {
-        await extractPdfText();
+        const extracted = await extractPdfText();
+        // 자동 요약 흐름: 추출한 텍스트가 있으면 바로 요약 요청
+        if (extracted && extracted.trim().length > 0) {
+          if (aiStatus) aiStatus.textContent = '추출 완료 — 요약 시작...';
+          try {
+            summarizeBtn.disabled = true;
+            const summary = await callSummarize(extracted);
+            if (aiResult) aiResult.textContent = summary;
+            if (aiStatus) aiStatus.textContent = '요약 완료';
+          } catch (summErr) {
+            console.error('자동 요약 실패', summErr);
+            if (aiStatus) aiStatus.textContent = '자동 요약 실패';
+            alert('자동 요약 중 오류가 발생했습니다: ' + (summErr && summErr.message));
+          } finally {
+            summarizeBtn.disabled = false;
+          }
+        }
       } finally {
         extractBtn.disabled = false;
       }
