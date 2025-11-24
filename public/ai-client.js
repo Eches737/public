@@ -7,9 +7,19 @@
     // Try the real API first. If DNS/network error occurs (eg. placeholder domain),
     // fall back to a local/dev summary so UI can be tested without a working API.
     try {
+      // Attach Authorization if Cognito token available
+      const headers = { 'Content-Type': 'application/json' };
+      try {
+        const tok = sessionStorage.getItem('cognito_tokens');
+        if (tok) {
+          const t = JSON.parse(tok);
+          if (t && t.id_token) headers['Authorization'] = `Bearer ${t.id_token}`;
+        }
+      } catch (e) { /* ignore */ }
+
       const res = await fetch(`${API_BASE}/ai/summarize`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ text })
       });
 

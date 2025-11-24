@@ -61,19 +61,26 @@
     // Send code + verifier to backend for token exchange
     try {
       const resp = await fetch('/auth/callback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, code_verifier: verifier })
-      });
-      const j = await resp.json();
-      if (resp.ok && j.ok) {
-        // successful - clear verifier and redirect
-        sessionStorage.removeItem('pkce_verifier');
-        window.location.href = '/';
-      } else {
-        console.error('Token exchange failed', j);
-        document.body.innerText = 'Login failed: ' + (j.error || JSON.stringify(j));
-      }
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, code_verifier: verifier })
+        });
+        const j = await resp.json();
+        if (resp.ok && j.ok) {
+          // store tokens in sessionStorage/localStorage for frontend use
+          try {
+            const tokens = j.tokens || {};
+            // tokens: { access_token, id_token, refresh_token, expires_in, token_type }
+            sessionStorage.setItem('cognito_tokens', JSON.stringify(tokens));
+          } catch (e) { console.warn('store tokens failed', e); }
+
+          // successful - clear verifier and redirect
+          sessionStorage.removeItem('pkce_verifier');
+          window.location.href = '/';
+        } else {
+          console.error('Token exchange failed', j);
+          document.body.innerText = 'Login failed: ' + (j.error || JSON.stringify(j));
+        }
     } catch (e) {
       console.error('Callback exchange error', e);
       document.body.innerText = 'Login failed: ' + e.message;
