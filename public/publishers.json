@@ -1,0 +1,28 @@
+{
+  "publishers": [
+    {
+      "id": "crossref",
+      "name": "CrossRef",
+      "shortName": "CrossRef",
+      "logo": "🔗",
+      "color": "#0ea5e9",
+      "apiUrl": "https://api.crossref.org/works"
+    },
+    {
+      "id": "arxiv",
+      "name": "arXiv",
+      "shortName": "arXiv",
+      "logo": "🧪",
+      "color": "#f97316",
+      "apiUrl": "http://export.arxiv.org/api/query"
+    },
+    {
+      "id": "mock",
+      "name": "Mock Publisher",
+      "shortName": "Mock",
+      "logo": "📚",
+      "color": "#6b7280",
+      "apiUrl": "https://example.com/api/search"
+    }
+  ]
+}

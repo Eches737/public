@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sciflix — PDF 뷰어</title>
+  <link rel="stylesheet" href="/style.css">
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <!-- inline tiny favicon to avoid server 404 for /favicon.ico requests -->
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">
+  <style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Noto Sans KR',sans-serif;margin:0;padding:0.5rem 1rem 1rem 0.5rem}
+    header{display:flex;align-items:center;gap:1rem;position:relative}
+    /* 닫기 버튼 스타일 */
+    .close-btn{
+      position:absolute;
+      top:50%;
+      right:0;
+      transform:translateY(-50%);
+      background:none;
+      border:none;
+      font-size:24px;
+      color:#666;
+      cursor:pointer;
+      padding:8px;
+      border-radius:50%;
+      width:40px;
+      height:40px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transition:all 0.2s ease;
+    }
+    .close-btn:hover{
+      background:#f5f5f5;
+      color:#333;
+      transform:translateY(-50%) scale(1.1);
+    }
+    .close-btn:active{
+      transform:translateY(-50%) scale(0.95);
+      background:#eee;
+    }
+  main{max-width:1200px;margin:1rem 0 1rem 0;}
+    /* layout: make sidebar on the left and content on the right similar to homepage */
+  .layout{display:flex;gap:1rem;align-items:flex-start}
+  /* nudge layout left so sidebar sits closer to viewport edge */
+  .layout{margin-left:0}
+    aside.sidebar{flex:0 0 280px;max-width:280px}
+    .content{flex:1 1 auto;min-width:0}
+    /* controls: keep URL input left, search button immediately right, file upload pushed to far right */
+    .controls{display:flex;gap:.5rem;align-items:center;flex-wrap:nowrap}
+    #dropArea{border:2px dashed #ddd;padding:1rem;border-radius:6px;text-align:center;color:#666}
+  /* PDF Canvas 스타일 */
+  #pdfCanvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+    height: auto;
+  }
+  #pdfCanvasContainer {
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-top: 1rem;
+  }
+  #pdfToolbar {
+    border-radius: 6px 6px 0 0;
+  }
+  #pdfViewerContainer{position:relative}
+  #viewerDropOverlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,102,214,0.06);color:#0366d6;font-weight:600;border-radius:6px}
+  #pdfViewerContainer.dragover #viewerDropOverlay{display:flex}
+    .hint{color:#666;font-size:.9rem}
+    .btn{background:#0366d6;color:white;border:none;padding:.4rem .6rem;border-radius:4px;cursor:pointer}
+    .controls .file-label{margin-left:auto}
+    /* make the upload label match the search button size */
+  .controls button.btn, .controls .file-label{display:inline-flex;align-items:center;justify-content:center;padding:.4rem .8rem;min-width:84px; height:36px; box-sizing:border-box}
+    
+    /* 사이드바 스타일 (메인 페이지와 동일) */
+    .btn{border:1px solid #e5e7eb; background:#fff; color:#111827; padding:.6rem .9rem; border-radius:10px; cursor:pointer}
+    .btn--primary{background:#3b82f6; border-color:transparent; color:#fff}
+    .btn--ghost{background:transparent}
+    .btn--icon{padding:.4rem .6rem}
+    .btn--sm{padding:.35rem .55rem; font-size:.85rem}
+    .control{width:100%; padding:.85rem 1rem; border:1px solid #e5e7eb; border-radius:12px; background:#fff; color:#111827}
+    .control:focus{outline:2px solid #93c5fd}
+    
+    .sidebar{background:#fafafa; border:1px solid #e5e7eb; border-radius:10px; padding:6px; height:auto; box-sizing:border-box}
+    .sidebar__header{display:flex; align-items:center; justify-content:space-between; gap:8px}
+    .sidebar__title{margin:0; font-size:1rem}
+    .sidebar__body{margin-top:8px; overflow:auto; max-height:calc(100vh - 140px); padding-right:8px}
+    .sidebar__adder{display:flex; gap:6px; align-items:center}
+    .sidebar__adder .control{flex:1; padding:.3rem .5rem; font-size:.92rem}
+    .sidebar__adder #addListBtn{padding:.35rem .5rem; font-size:.88rem}
+    .user-lists{list-style:none; margin:8px 0 0; padding:0; display:block}
+    .user-lists--nested{
+      max-width:100%; 
+      box-sizing:border-box;
+      margin-top:6px; 
+      margin-left:16px; 
+      display:block;
+    }
+    
+    /* 기본 목록 아이템 스타일 (메인 페이지와 동일) */
+    .user-list-item{
+      box-sizing:border-box;
+      display:flex; 
+      flex-direction: column; /* 세로로 배치하여 줄바꿈 허용 */
+      align-items:stretch; /* 전체 너비 사용 */
+      gap:8px;
+      padding:.5rem .6rem; 
+      margin-bottom:4px;
+      border-radius:8px; 
+      cursor:pointer;
+      background:#fff; 
+      border:1px solid #f3f4f6; 
+      transition:all .15s ease; 
+      position:relative;
+      min-height: 44px;
+    }
+    .user-list-item:hover{background:#f8fafc; border-color:#e5e7eb}
+    
+    /* 헤더 부분 (제목 + 액션 버튼) */
+    .user-list-item__header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      flex-wrap: wrap; /* 내용이 길면 줄바꿈 */
+    }
+    
+    .user-list-item .user-list__title{
+      flex: 1 1 0; /* 최소 폭 0으로 설정하여 줄바꿈 유도 */
+      min-width: 0; 
+      overflow: visible; 
+      text-overflow: unset; 
+      white-space: normal; /* 줄바꿈 허용 */
+      font-weight: 600; 
+      font-size: .98rem;
+      color: inherit;
+      display: block;
+      word-wrap: break-word; /* 긴 단어 줄바꿈 */
+      word-break: break-word; /* 강제 줄바꿈 */
+      line-height: 1.3;
+    }
+    
+    /* PDF 아이템 스타일 (메인 페이지와 동일하게 연하게) */
+    .user-list-item--pdf, 
+    .user-list-item[data-type="pdf"] {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe) !important; 
+      border: 1px solid #7dd3fc !important;
+    }
+    .user-list-item--pdf .user-list__title,
+    .user-list-item[data-type="pdf"] .user-list__title {
+      color: #0f172a; /* PDF 제목 색상 */
+    }
+    .user-list-item--pdf:hover,
+    .user-list-item[data-type="pdf"]:hover {
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(125, 211, 252, 0.12);
+      transition: all 0.2s ease;
+    }
+    
+    /* 일반 목록 아이템 스타일 (메인 페이지와 동일하게 연하게) */
+    .user-list-item:not([data-type="pdf"]):not(.user-list-item--pdf) {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5); 
+      border: 1px solid #fbbf24;
+    }
+    .user-list-item:not([data-type="pdf"]):not(.user-list-item--pdf) .user-list__title {
+      color: #42301a; /* 일반 목록 제목 색상 */
+    }
+    .user-list-item:not([data-type="pdf"]):not(.user-list-item--pdf):hover {
+      background: linear-gradient(135deg, #ffedd5, #fed7aa);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(251, 191, 36, 0.12);
+      transition: all 0.2s ease;
+    }
+    
+    /* 액션 버튼 */
+    .user-list__actions{
+      display: flex;
+      gap: 4px;
+      opacity: 0.7;
+      align-items: flex-start;
+      flex-shrink: 0;
+    }
+    .user-list-item:hover .user-list__actions{
+      opacity: 1;
+    }
+    .user-list-item button{
+      border:1px solid #e5e7eb;
+      background:#fff;
+      color:#111827;
+      padding:.35rem .55rem;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:.85rem;
+    }
+    
+    /* 드래그 상태 */
+    .user-list-item.dragging {
+      opacity: 0.5;
+      transform: rotate(2deg);
+    }
+    
+    /* 드롭 표시 */
+    .drop-target {
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+    .drop-before {
+      border-top: 2px solid #3b82f6;
+    }
+    .drop-after {
+      border-bottom: 2px solid #3b82f6;
+    }
+  </style>
+  <style>
+    /* Make AI sidebar align to the right edge of the body (viewport) */
+    #aiSidebar {
+      position: fixed !important;
+      right: 16px !important; /* spacing from right edge */
+      left: auto !important;
+      top: 88px !important; /* below header (approx) */
+      width: 320px !important;
+      max-width: calc(40vw) !important;
+      height: calc(100vh - 112px) !important;
+      overflow: auto !important;
+      z-index: 1200 !important;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08) !important;
+      background: #fafafa !important;
+    }
+
+    /* Avoid covering footer/header on very small viewports - make it static */
+    @media (max-width: 980px) {
+      #aiSidebar { position: static; width: auto; max-width: none; height: auto; box-shadow: none; }
+      .layout { gap: 0.75rem; }
+    }
+    /* When wide enough, add right padding so fixed AI sidebar doesn't overlap content.
+       Controlled by body.ai-open class toggled from JS so collapsing removes padding. */
+    @media (min-width: 981px) {
+      body.ai-open { padding-right: calc(320px + 48px); }
+    }
+
+    /* Collapsible sidebar styles and transitions */
+    aside.sidebar { transition: all 260ms cubic-bezier(.2,.9,.2,1); }
+    /* left sidebar collapsed */
+    aside.sidebar.collapsed { width:56px; flex:0 0 56px; min-width:56px; max-width:56px; overflow:hidden; }
+    aside.sidebar.collapsed .sidebar__body { opacity:0; transform:translateX(-8px); height:0; pointer-events:none; }
+
+    /* AI sidebar open/closed animation */
+    #aiSidebar { transition: transform 260ms cubic-bezier(.2,.9,.2,1), opacity 200ms ease; }
+    #aiSidebar.ai-collapsed { transform: translateX(380px); opacity:0; pointer-events:none; }
+
+    /* toggle button tiny style */
+    .sidebar__header .btn--icon { width:36px; height:36px; padding:6px; }
+
+    /* AI handle visible when aiSidebar is collapsed - small vertical tab at right edge */
+    #aiHandle {
+      position: fixed;
+      right: 12px;
+      top: 140px;
+      width: 48px;
+      height: 64px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.06);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1300;
+      cursor: pointer;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    /* show handle when aiSidebar has collapsed class */
+    #aiSidebar.ai-collapsed + #aiHandle { display: flex; }
+
+    @media (max-width: 980px) {
+      #aiHandle { display: none !important; }
+    }
+  </style>
+</head>
+<body class="pdf-viewer-page">
+  <header>
+    <h1 class="site-header__brand"><a id="brandLink" href="/" style="color:inherit;text-decoration:none">📚 Sciflix</a></h1>
+    <!-- header navigation intentionally empty on viewer page -->
+    <nav aria-label="도구" style="display:none"></nav>
+    <button id="closeBtn" class="close-btn" type="button" aria-label="닫기" title="이전 페이지로 돌아가기">✕</button>
+  </header>
+  <main>
+    <div class="layout">
+  <aside id="sidebar" class="sidebar" aria-label="사용자 목록">
+        <header class="sidebar__header">
+          <h2 class="sidebar__title">내 목록</h2>
+          <div class="actions">
+            <button id="sidebarToggle" class="btn btn--icon" aria-expanded="true" aria-controls="sidebar">☰</button>
+          </div>
+        </header>
+        <div class="sidebar__body">
+          <!-- 목록 추가 도구 -->
+          <div class="sidebar__adder">
+            <input id="newListName" type="text" class="control" placeholder="목록 이름..." maxlength="100">
+            <button id="addListBtn" class="btn btn--sm">추가</button>
+          </div>
+          <!-- 사용자 목록 -->
+          <ul id="userLists" class="user-lists">
+            <!-- 목록이 여기에 동적으로 추가됩니다 -->
+          </ul>
+        </div>
+      </aside>
+      <section class="content">
+        <section class="controls">
+      <input id="urlInput" type="url" placeholder="원격 PDF URL (예: https://...)" style="flex:1;padding:.4rem;border:1px solid #ccc;border-radius:4px">
+      <button id="openUrlBtn" class="btn">검색</button>
+      <label class="btn file-label">
+        파일 선택
+        <input id="fileInput" type="file" accept="application/pdf" style="display:none">
+      </label>
+    </section>
+    <p class="hint">뷰어 영역으로 PDF 파일을 끌어다 놓거나 위의 파일 선택을 사용하세요. 원격 URL을 붙여넣으면 바로 열 수 있습니다.</p>
+    <div id="pdfViewerContainer">
+      <div id="pdfToolbar" style="display: none; padding: 10px; background: #f5f5f5; border-bottom: 1px solid #ddd;">
+        <button id="prevPage" class="btn">◀ 이전</button>
+        <span id="pageInfo" style="margin: 0 15px;">페이지: <span id="currentPage">1</span> / <span id="totalPages">-</span></span>
+        <button id="nextPage" class="btn">다음 ▶</button>
+        <span style="margin: 0 15px;">배율:</span>
+        <button id="zoomOut" class="btn">축소</button>
+        <span id="zoomLevel" style="margin: 0 10px;">100%</span>
+        <button id="zoomIn" class="btn">확대</button>
+      </div>
+      <div id="pdfCanvasContainer" style="overflow: auto; max-height: 80vh; text-align: center; padding: 20px;">
+        <canvas id="pdfCanvas" style="border: 1px solid #ddd; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"></canvas>
+      </div>
+      <div id="viewerDropOverlay" aria-hidden="true">파일을 이곳에 놓으세요</div>
+    </div>
+      </section>
+      <!-- AI sidebar has been moved out of the layout and will be rendered as a fixed element -->
+    </section>
+  </div>
+  </main>
+
+  <!-- AI sidebar: moved outside of .layout so it can be positioned fixed on the right reliably -->
+  <aside id="aiSidebar" class="sidebar" aria-label="AI 도구">
+    <header class="sidebar__header">
+      <h2 class="sidebar__title">AI 도구</h2>
+      <div class="actions">
+        <button id="aiToggle" class="btn btn--icon" aria-expanded="true" title="AI 열기/닫기">◀</button>
+      </div>
+    </header>
+    <div class="sidebar__body">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <select id="aiModel" class="control" style="width:100%"><option value="fast">빠른 요약</option><option value="detailed">상세 요약</option></select>
+      </div>
+      <div style="margin-bottom:8px">
+        <button id="summarizeBtn" class="btn btn--primary">요약 생성</button>
+        <button id="extractBtn" class="btn">텍스트 추출</button>
+      </div>
+      <div id="aiStatus" style="font-size:.9rem;color:#666;margin-bottom:8px">요약을 생성하려면 문서를 열고 '요약 생성'을 누르세요.</div>
+      <div id="aiResult" style="background:#fff;padding:8px;border-radius:6px;min-height:120px;overflow:auto;border:1px solid #eee"></div>
+    </div>
+  </aside>
+  <!-- Small handle to reopen AI panel when it's collapsed/hidden -->
+  <button id="aiHandle" aria-hidden="true" title="AI 열기">AI</button>
+  <script src="/list-core.js"></script>
+  <script src="/pdf-viewer.js"></script>
+  <script src="/pdf-ai.js"></script>
+  
+</body>
+</html>

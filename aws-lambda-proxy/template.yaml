@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda proxy for external search API (SAM template)
+Resources:
+  SearchProxyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: SearchProxyFunction
+      Handler: index.handler
+      Runtime: nodejs18.x
+      CodeUri: .
+      MemorySize: 128
+      Timeout: 10
+      Environment:
+        Variables:
+          # 배포 시 Secrets Manager 또는 환경변수로 EXTERNAL_API_KEY를 설정하세요
+          EXTERNAL_API_URL: "https://external-search.example.com/search"
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        SearchApi:
+          Type: Api
+          Properties:
+            Path: /search
+            Method: get

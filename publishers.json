@@ -1,0 +1,430 @@
+{
+  "publishers": [
+    {
+      "id": "nature",
+      "name": "Nature Publishing Group",
+      "shortName": "Nature",
+      "description": "세계 최고 권위의 과학 저널 그룹",
+      "homepage": "https://www.nature.com",
+      "searchUrl": "https://www.nature.com/search?q={query}",
+      "apiUrl": "https://api.springernature.com/meta/v2/json",
+      "logo": "🧬",
+      "color": "#0f7b7e",
+      "journals": [
+        {
+          "name": "Nature",
+          "issn": "0028-0836",
+          "impactFactor": 64.8,
+          "field": "multidisciplinary"
+        },
+        {
+          "name": "Nature Biotechnology",
+          "issn": "1087-0156", 
+          "impactFactor": 46.9,
+          "field": "biotechnology"
+        },
+        {
+          "name": "Nature Medicine",
+          "issn": "1078-8956",
+          "impactFactor": 87.2,
+          "field": "medicine"
+        },
+        {
+          "name": "Nature Materials",
+          "issn": "1476-1122",
+          "impactFactor": 43.8,
+          "field": "materials"
+        }
+      ],
+      "access": "subscription",
+      "openAccess": false,
+      "countries": ["UK", "US"],
+      "founded": 1869,
+      "fields": ["science", "medicine", "biology", "physics", "chemistry", "materials"]
+    },
+    {
+      "id": "science",
+      "name": "American Association for the Advancement of Science",
+      "shortName": "Science",
+      "description": "미국과학진흥협회 발행 저널",
+      "homepage": "https://www.science.org",
+      "searchUrl": "https://www.science.org/action/doSearch?text1={query}",
+      "apiUrl": null,
+      "logo": "🔬",
+      "color": "#1f4e79",
+      "journals": [
+        {
+          "name": "Science",
+          "issn": "0036-8075",
+          "impactFactor": 63.7,
+          "field": "multidisciplinary"
+        },
+        {
+          "name": "Science Translational Medicine",
+          "issn": "1946-6234",
+          "impactFactor": 17.1,
+          "field": "medicine"
+        },
+        {
+          "name": "Science Advances",
+          "issn": "2375-2548",
+          "impactFactor": 14.9,
+          "field": "multidisciplinary"
+        }
+      ],
+      "access": "subscription",
+      "openAccess": false,
+      "countries": ["US"],
+      "founded": 1880,
+      "fields": ["science", "medicine", "biology", "physics", "chemistry", "engineering"]
+    },
+    {
+      "id": "elsevier",
+      "name": "Elsevier",
+      "shortName": "Elsevier",
+      "description": "세계 최대 과학 기술 의학 출판사",
+      "homepage": "https://www.elsevier.com",
+      "searchUrl": "https://www.sciencedirect.com/search?qs={query}",
+      "apiUrl": "https://api.elsevier.com/content/search/scopus",
+      "logo": "📚",
+      "color": "#ff6c00",
+      "journals": [
+        {
+          "name": "Cell",
+          "issn": "0092-8674",
+          "impactFactor": 66.9,
+          "field": "biology"
+        },
+        {
+          "name": "The Lancet",
+          "issn": "0140-6736",
+          "impactFactor": 202.7,
+          "field": "medicine"
+        },
+        {
+          "name": "Energy & Environmental Science",
+          "issn": "1754-5706",
+          "impactFactor": 38.5,
+          "field": "energy"
+        },
+        {
+          "name": "Journal of the American Chemical Society",
+          "issn": "0002-7863",
+          "impactFactor": 16.4,
+          "field": "chemistry"
+        }
+      ],
+      "access": "subscription",
+      "openAccess": false,
+      "countries": ["Netherlands", "UK", "US"],
+      "founded": 1880,
+      "fields": ["medicine", "science", "technology", "engineering", "mathematics"]
+    },
+    {
+      "id": "springer",
+      "name": "Springer Nature",
+      "shortName": "Springer",
+      "description": "독일계 글로벌 학술 출판사",
+      "homepage": "https://link.springer.com",
+      "searchUrl": "https://link.springer.com/search?query={query}",
+      "apiUrl": "https://api.springernature.com/meta/v2/json",
+      "logo": "🌿",
+      "color": "#004b87",
+      "journals": [
+        {
+          "name": "Journal of Materials Science",
+          "issn": "0022-2461",
+          "impactFactor": 4.5,
+          "field": "materials"
+        },
+        {
+          "name": "Applied Physics Letters",
+          "issn": "0003-6951",
+          "impactFactor": 4.0,
+          "field": "physics"
+        },
+        {
+          "name": "European Journal of Operational Research",
+          "issn": "0377-2217",
+          "impactFactor": 6.4,
+          "field": "mathematics"
+        }
+      ],
+      "access": "mixed",
+      "openAccess": true,
+      "countries": ["Germany", "UK"],
+      "founded": 1842,
+      "fields": ["science", "technology", "medicine", "humanities", "social_sciences"]
+    },
+    {
+      "id": "wiley",
+      "name": "John Wiley & Sons",
+      "shortName": "Wiley",
+      "description": "글로벌 연구 및 교육 출판사",
+      "homepage": "https://onlinelibrary.wiley.com",
+      "searchUrl": "https://onlinelibrary.wiley.com/action/doSearch?AllField={query}",
+      "apiUrl": null,
+      "logo": "📖",
+      "color": "#1e3a8a",
+      "journals": [
+        {
+          "name": "Advanced Materials",
+          "issn": "0935-9648",
+          "impactFactor": 32.1,
+          "field": "materials"
+        },
+        {
+          "name": "Angewandte Chemie",
+          "issn": "1433-7851",
+          "impactFactor": 16.8,
+          "field": "chemistry"
+        },
+        {
+          "name": "Small",
+          "issn": "1613-6810",
+          "impactFactor": 15.1,
+          "field": "nanotechnology"
+        }
+      ],
+      "access": "subscription",
+      "openAccess": true,
+      "countries": ["US", "UK"],
+      "founded": 1807,
+      "fields": ["science", "technology", "medicine", "business", "humanities"]
+    },
+    {
+      "id": "acs",
+      "name": "American Chemical Society",
+      "shortName": "ACS",
+      "description": "미국화학회 발행 저널",
+      "homepage": "https://pubs.acs.org",
+      "searchUrl": "https://pubs.acs.org/action/doSearch?AllField={query}",
+      "apiUrl": null,
+      "logo": "⚗️",
+      "color": "#0066cc",
+      "journals": [
+        {
+          "name": "Journal of the American Chemical Society",
+          "issn": "0002-7863",
+          "impactFactor": 16.4,
+          "field": "chemistry"
+        },
+        {
+          "name": "ACS Nano",
+          "issn": "1936-0851",
+          "impactFactor": 18.0,
+          "field": "nanotechnology"
+        },
+        {
+          "name": "Chemical Reviews",
+          "issn": "0009-2665",
+          "impactFactor": 62.1,
+          "field": "chemistry"
+        }
+      ],
+      "access": "subscription",
+      "openAccess": true,
+      "countries": ["US"],
+      "founded": 1876,
+      "fields": ["chemistry", "materials", "energy", "environment"]
+    },
+    {
+      "id": "ieee",
+      "name": "Institute of Electrical and Electronics Engineers",
+      "shortName": "IEEE",
+      "description": "전기전자공학회 발행 저널",
+      "homepage": "https://ieeexplore.ieee.org",
+      "searchUrl": "https://ieeexplore.ieee.org/search/searchresult.jsp?queryText={query}",
+      "apiUrl": "https://ieeexploreapi.ieee.org/api/v1/search/articles",
+      "logo": "⚡",
+      "color": "#00629b",
+      "journals": [
+        {
+          "name": "Proceedings of the IEEE",
+          "issn": "0018-9219",
+          "impactFactor": 11.2,
+          "field": "engineering"
+        },
+        {
+          "name": "IEEE Transactions on Pattern Analysis and Machine Intelligence",
+          "issn": "0162-8828",
+          "impactFactor": 24.3,
+          "field": "computer_science"
+        },
+        {
+          "name": "IEEE Internet of Things Journal",
+          "issn": "2327-4662",
+          "impactFactor": 10.6,
+          "field": "iot"
+        }
+      ],
+      "access": "subscription",
+      "openAccess": true,
+      "countries": ["US"],
+      "founded": 1884,
+      "fields": ["electrical_engineering", "computer_science", "telecommunications", "robotics"]
+    },
+    {
+      "id": "aaas",
+      "name": "American Association for the Advancement of Science",
+      "shortName": "AAAS",
+      "description": "미국과학진흥협회",
+      "homepage": "https://www.aaas.org",
+      "searchUrl": "https://www.aaas.org/search?keywords={query}",
+      "apiUrl": null,
+      "logo": "🧪",
+      "color": "#e31c23",
+      "journals": [
+        {
+          "name": "Science",
+          "issn": "0036-8075",
+          "impactFactor": 63.7,
+          "field": "multidisciplinary"
+        }
+      ],
+      "access": "subscription",
+      "openAccess": false,
+      "countries": ["US"],
+      "founded": 1848,
+      "fields": ["science", "technology", "engineering", "mathematics"]
+    },
+    {
+      "id": "plos",
+      "name": "Public Library of Science",
+      "shortName": "PLOS",
+      "description": "오픈 액세스 과학 저널 출판사",
+      "homepage": "https://plos.org",
+      "searchUrl": "https://journals.plos.org/plosone/search?q={query}",
+      "apiUrl": "https://api.plos.org/search",
+      "logo": "🔓",
+      "color": "#3c63af",
+      "journals": [
+        {
+          "name": "PLOS ONE",
+          "issn": "1932-6203",
+          "impactFactor": 3.7,
+          "field": "multidisciplinary"
+        },
+        {
+          "name": "PLOS Biology",
+          "issn": "1545-7885",
+          "impactFactor": 9.8,
+          "field": "biology"
+        },
+        {
+          "name": "PLOS Medicine",
+          "issn": "1549-1676",
+          "impactFactor": 13.8,
+          "field": "medicine"
+        }
+      ],
+      "access": "open",
+      "openAccess": true,
+      "countries": ["US"],
+      "founded": 2003,
+      "fields": ["biology", "medicine", "science", "multidisciplinary"]
+    },
+    {
+      "id": "rsc",
+      "name": "Royal Society of Chemistry",
+      "shortName": "RSC",
+      "description": "영국왕립화학회 발행 저널",
+      "homepage": "https://www.rsc.org",
+      "searchUrl": "https://pubs.rsc.org/en/results?searchtext={query}",
+      "apiUrl": null,
+      "logo": "👑",
+      "color": "#662d91",
+      "journals": [
+        {
+          "name": "Chemical Science",
+          "issn": "2041-6520",
+          "impactFactor": 9.9,
+          "field": "chemistry"
+        },
+        {
+          "name": "Energy & Environmental Science",
+          "issn": "1754-5706",
+          "impactFactor": 38.5,
+          "field": "energy"
+        }
+      ],
+      "access": "mixed",
+      "openAccess": true,
+      "countries": ["UK"],
+      "founded": 1841,
+      "fields": ["chemistry", "materials", "energy", "environment"]
+    }
+  ],
+  "categories": [
+    {
+      "id": "multidisciplinary",
+      "name": "종합과학",
+      "description": "다양한 과학 분야를 포괄하는 저널"
+    },
+    {
+      "id": "medicine",
+      "name": "의학",
+      "description": "의학 및 보건과학 분야"
+    },
+    {
+      "id": "biology",
+      "name": "생물학",
+      "description": "생명과학 및 생물학 분야"
+    },
+    {
+      "id": "chemistry",
+      "name": "화학",
+      "description": "화학 및 화학공학 분야"
+    },
+    {
+      "id": "physics",
+      "name": "물리학",
+      "description": "물리학 및 응용물리 분야"
+    },
+    {
+      "id": "materials",
+      "name": "재료과학",
+      "description": "재료과학 및 나노기술 분야"
+    },
+    {
+      "id": "engineering",
+      "name": "공학",
+      "description": "공학 및 기술 분야"
+    },
+    {
+      "id": "computer_science",
+      "name": "컴퓨터과학",
+      "description": "컴퓨터과학 및 정보기술 분야"
+    },
+    {
+      "id": "energy",
+      "name": "에너지",
+      "description": "에너지 및 환경 분야"
+    },
+    {
+      "id": "nanotechnology",
+      "name": "나노기술",
+      "description": "나노과학 및 나노기술 분야"
+    }
+  ],
+  "accessTypes": [
+    {
+      "id": "open",
+      "name": "오픈 액세스",
+      "description": "무료로 접근 가능한 논문",
+      "color": "#27ae60"
+    },
+    {
+      "id": "subscription",
+      "name": "구독 필요",
+      "description": "기관 구독 또는 개별 구매 필요",
+      "color": "#e74c3c"
+    },
+    {
+      "id": "mixed",
+      "name": "혼합",
+      "description": "오픈 액세스와 구독 논문 혼재",
+      "color": "#f39c12"
+    }
+  ]
+}
