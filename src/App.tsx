@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getUserState, saveUserState } from "./api/userState";
-import { Auth } from 'aws-amplify';
+import { getCurrentUser, signInWithRedirect, signOut as amplifySignOut } from '@aws-amplify/auth';
 
 
 function App() {
@@ -11,7 +11,7 @@ function App() {
 
   const handleLogin = async () => {
     try {
-      await Auth.federatedSignIn();
+      await signInWithRedirect();
     } catch (e) {
       console.error('login error', e);
     }
@@ -19,7 +19,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await Auth.signOut();
+      await amplifySignOut();
       setIsAuthenticated(false);
     } catch (e) {
       console.error('logout error', e);
@@ -28,7 +28,7 @@ function App() {
 
   useEffect(() => {
     // check auth state on mount
-    Auth.currentAuthenticatedUser()
+    getCurrentUser()
       .then(() => setIsAuthenticated(true))
       .catch(() => setIsAuthenticated(false));
   }, []);

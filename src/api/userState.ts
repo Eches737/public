@@ -1,10 +1,11 @@
-import { Auth } from "aws-amplify";
+import { fetchAuthSession } from "@aws-amplify/core";
 
 const API_BASE = "https://crumgr8vbi.execute-api.ap-northeast-2.amazonaws.com";
 
 async function authFetch(url: string, options: RequestInit = {}) {
-  const session = await Auth.currentSession();
-  const token = session.getIdToken().getJwtToken();
+  const session = await fetchAuthSession();
+  const token = session?.tokens?.idToken?.toString();
+  if (!token) throw new Error("no auth token");
 
   return fetch(url, {
     ...options,

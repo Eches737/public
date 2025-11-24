@@ -1,5 +1,7 @@
 import { Amplify } from "aws-amplify";
 
+// Amplify v6 types are stricter; cast to `any` here because this file contains
+// placeholders that will be replaced with real Cognito values by the developer.
 Amplify.configure({
   Auth: {
     region: "ap-northeast-2",
@@ -13,4 +15,4 @@ Amplify.configure({
       responseType: "code",
     },
   },
-});
+} as any);
