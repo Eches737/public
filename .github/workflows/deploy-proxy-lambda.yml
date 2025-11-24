@@ -13,10 +13,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configure Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: aws-lambda-proxy/package-lock.json
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -26,26 +28,29 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Install lambda deps (if any)
+        working-directory: aws-lambda-proxy
+        shell: bash
         run: |
-          # If aws-lambda-proxy exists, install deps there. Prefer `npm ci` when a lockfile exists,
-          # otherwise fall back to `npm install`. If neither package.json nor lockfile exist, skip.
-          if [ -d aws-lambda-proxy ]; then
-            if [ -f aws-lambda-proxy/package-lock.json ] || [ -f aws-lambda-proxy/npm-shrinkwrap.json ]; then
-              (cd aws-lambda-proxy && npm ci)
-            elif [ -f aws-lambda-proxy/package.json ]; then
-              (cd aws-lambda-proxy && npm install)
-            else
-              echo "No package.json in aws-lambda-proxy, skipping dependency install"
+          if [ ! -f package.json ]; then
+            echo "No package.json here; skipping"; exit 0
+          fi
+
+          if [ -f package-lock.json ]; then
+            # 잠금파일 버전에 맞춰 npm 업그레이드(락 v3는 npm>=9 필요)
+            LOCKVER=$(node -p "try{require('./package-lock.json').lockfileVersion}catch(e){''}")
+            if [ "$LOCKVER" = "3" ]; then
+              npm -v | grep -qE '^9|^10' || npm i -g npm@9
             fi
+            npm ci --omit=dev
+          elif [ -f yarn.lock ]; then
+            corepack enable
+            corepack yarn install --immutable
+          elif [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            corepack pnpm install --frozen-lockfile
           else
-            # No aws-lambda-proxy folder; if root has package.json use npm ci when lockfile present
-            if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-              npm ci
-            elif [ -f package.json ]; then
-              npm install
-            else
-              echo "No package.json at root, skipping dependency install"
-            fi
+            echo "No lockfile found; falling back to npm install"
+            npm install --no-audit --no-fund
           fi
 
       - name: Create deployment package
