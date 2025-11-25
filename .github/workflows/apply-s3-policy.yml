@@ -36,16 +36,15 @@ jobs:
         with:
           name: bucket-policy-backup
           path: policy-backup-*.json
-
-    - name: Generate policy JSON (script)
-    run: |
-      set -euo pipefail
-      export BUCKET="${{ secrets.S3_BUCKET }}"
-      export MODE="${{ github.event.inputs.mode }}"
-      export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
-      export CLOUDFRONT_DISTRIBUTION_ID="${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
-      export OAI_CANONICAL_USER_ID="${{ secrets.OAI_CANONICAL_USER_ID }}"
-      node .github/scripts/generate-s3-policy.js
+      - name: Generate policy JSON (script)
+        run: |
+          set -euo pipefail
+          export BUCKET="${{ secrets.S3_BUCKET }}"
+          export MODE="${{ github.event.inputs.mode }}"
+          export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+          export CLOUDFRONT_DISTRIBUTION_ID="${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+          export OAI_CANONICAL_USER_ID="${{ secrets.OAI_CANONICAL_USER_ID }}"
+          node .github/scripts/generate-s3-policy.js
 
       - name: Apply new bucket policy
         run: |
