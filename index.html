@@ -591,14 +591,15 @@
   <input type="file" id="pdfInput" accept=".pdf" style="display: none;" />
 
   <!-- 스크립트 로드 (use relative paths to avoid root/host mismatches) -->
-  <script src="list-core.js"></script>
+  <!-- The JS files are located in the `public/` subfolder in this workspace. Load them from that path. -->
+  <script src="public/list-core.js"></script>
   <script>
     // Cache busting for JS to ensure fresh code during development
     (function(){
       try{
         var t = Date.now();
         var s = document.createElement('script');
-        s.src = 'app.js?_=' + t;
+        s.src = 'public/app.js?_=' + t;
         document.body.appendChild(s);
       }catch(e){ console.warn('failed to inject app.js', e); }
     })();
