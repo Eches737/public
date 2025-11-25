@@ -32,7 +32,8 @@ app.use(express.json());
 // so serve static assets directly from __dirname instead of __dirname/public
 // which would resolve to .../public/public and cause 404s.
 const STATIC_ROOT = __dirname;
-app.use(express.static(STATIC_ROOT, { index: false }));
+// serve static files and allow index files (so '/' returns public/index.html)
+app.use(express.static(STATIC_ROOT));
 
 // Serve the project's root index.html (project root contains index.html)
 const ROOT_INDEX = path.join(__dirname, '..', 'index.html');
