@@ -34,6 +34,17 @@ app.use(express.json());
 const STATIC_ROOT = __dirname;
 app.use(express.static(STATIC_ROOT, { index: false }));
 
+// Serve the project's root index.html (project root contains index.html)
+const ROOT_INDEX = path.join(__dirname, '..', 'index.html');
+app.get(['/', '/index.html'], (req, res) => {
+  res.sendFile(ROOT_INDEX, (err) => {
+    if (err) {
+      console.warn('Failed to send root index.html', err);
+      res.status(err.status || 404).send('Not Found');
+    }
+  });
+});
+
 // Content Security Policy (개발용)
 // 개발 중 브라우저가 로컬 백엔드(예: :3001)로의 fetch/connect 요청을 차단하지 않도록 허용합니다.
 // 운영 환경에서는 이 설정을 더 엄격하게 구성하세요.
