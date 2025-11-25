@@ -1,0 +1,6 @@
+{
+  "name": "ref-paper-auth-callback",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.mjs"
+}
