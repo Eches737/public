@@ -5,6 +5,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📚 Sciflix - 학술 논문 검색</title>
+  <!-- Ensure all relative URLs are resolved from the site root -->
+  <base href="/">
   
   <script>
     // Global shim: make 'wheel' listeners passive by default when possible.
@@ -24,7 +26,7 @@
         return original.call(this, type, listener, options);
       };
     })();
-  </script>
+  </base>
   
   <script>
     // Cache busting for CSS to ensure fresh styles during development
@@ -590,16 +592,15 @@
   <!-- 숨겨진 파일 업로드 입력 -->
   <input type="file" id="pdfInput" accept=".pdf" style="display: none;" />
 
-  <!-- 스크립트 로드 (use relative paths to avoid root/host mismatches) -->
-  <!-- The JS files are located in the `public/` subfolder in this workspace. Load them from that path. -->
-  <script src="public/list-core.js"></script>
+  <!-- 스크립트 로드: 절대 루트 경로를 사용하여 서버가 public 폴더를 루트로 서빙할 때 안정적으로 로드됩니다 -->
+  <script src="/list-core.js"></script>
   <script>
     // Cache busting for JS to ensure fresh code during development
     (function(){
       try{
         var t = Date.now();
         var s = document.createElement('script');
-        s.src = 'public/app.js?_=' + t;
+        s.src = '/app.js?_=' + t;
         document.body.appendChild(s);
       }catch(e){ console.warn('failed to inject app.js', e); }
     })();
