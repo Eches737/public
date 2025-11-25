@@ -8,6 +8,9 @@ jobs:
   deploy-proxy-lambda:
     name: Deploy proxy Lambda
     runs-on: ubuntu-latest
+    # expose the secret as an env var so `if:` expressions can reference it
+    env:
+      HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
 
     steps:
       - name: Checkout repository
@@ -67,7 +70,7 @@ jobs:
           aws lambda update-function-code --function-name "${{ secrets.LAMBDA_FUNCTION_NAME }}" --zip-file fileb://function.zip
 
       - name: Optional healthcheck
-        if: ${{ secrets.HEALTHCHECK_URL != '' }}
+        if: ${{ env.HEALTHCHECK_URL != '' }}
         run: |
           echo "Running healthcheck against ${{ secrets.HEALTHCHECK_URL }}"
           curl -fsS --max-time 10 "${{ secrets.HEALTHCHECK_URL }}" || (echo "Healthcheck failed"; exit 1)
