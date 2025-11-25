@@ -16,15 +16,10 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies (ci when possible, fallback to install)
+      - name: Install dependencies (use npm install to avoid CI lockfile issues)
         run: |
-          if [ -f package-lock.json ]; then
-            echo "package-lock.json found — running npm ci --legacy-peer-deps"
-            npm ci --legacy-peer-deps
-          else
-            echo "No package-lock.json — running npm install --legacy-peer-deps"
-            npm install --legacy-peer-deps
-          fi
+          echo "Running npm install --legacy-peer-deps"
+          npm install --legacy-peer-deps
 
       - name: Build
         run: npm run build
