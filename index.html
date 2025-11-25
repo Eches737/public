@@ -590,7 +590,7 @@
   <!-- 숨겨진 파일 업로드 입력 -->
   <input type="file" id="pdfInput" accept=".pdf" style="display: none;" />
 
-  <!-- 스크립트 로드 -->
+  <!-- 스크립트 로드 (use relative paths to avoid root/host mismatches) -->
   <script src="list-core.js"></script>
   <script>
     // Cache busting for JS to ensure fresh code during development
