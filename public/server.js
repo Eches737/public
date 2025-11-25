@@ -25,6 +25,12 @@ app.use(cors({ origin: ORIGIN }));
 app.use(morgan('dev'));
 app.use(express.json());
 
+// Serve static files from the `public` directory (JS/CSS/assets).
+// Place this before API routes so requests for /list-core.js, /app.js, etc. return
+// the real file instead of falling through to an HTML fallback or 404.
+const STATIC_ROOT = path.join(__dirname, 'public');
+app.use(express.static(STATIC_ROOT, { index: false }));
+
 // Content Security Policy (개발용)
 // 개발 중 브라우저가 로컬 백엔드(예: :3001)로의 fetch/connect 요청을 차단하지 않도록 허용합니다.
 // 운영 환경에서는 이 설정을 더 엄격하게 구성하세요.
