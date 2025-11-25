@@ -14,9 +14,19 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          # Vite requires Node.js >= 20.19 or 22.12+, use Node 22 for CI
+          node-version: '22.x'
           cache: 'npm'
           cache-dependency-path: package-lock.json
+
+      - name: Debug Node runtime
+        run: |
+          echo "=== Node / NPM debug ==="
+          node -v || true
+          npm -v || true
+          which node || true
+          ls -la "$(which node)" || true
+          echo "=== End debug ==="
 
       - name: Install dependencies (use npm install to avoid CI lockfile issues)
         run: |
