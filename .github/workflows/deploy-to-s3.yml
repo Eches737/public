@@ -49,9 +49,9 @@ jobs:
         run: |
           if [ -d "dist" ]; then
             echo "Syncing ./dist --> s3://$S3_BUCKET"
-            aws s3 sync ./dist s3://$S3_BUCKET --delete --acl public-read \
+            aws s3 sync ./dist s3://$S3_BUCKET --delete \
               --cache-control "max-age=31536000,public"
           else
             echo "No dist directory found. Uploading repository root instead (excluding .git)"
-            aws s3 sync . s3://$S3_BUCKET --delete --acl public-read --exclude ".git/*" --exclude ".github/*"
+            aws s3 sync . s3://$S3_BUCKET --delete --exclude ".git/*" --exclude ".github/*"
           fi
