@@ -28,7 +28,10 @@ app.use(express.json());
 // Serve static files from the `public` directory (JS/CSS/assets).
 // Place this before API routes so requests for /list-core.js, /app.js, etc. return
 // the real file instead of falling through to an HTML fallback or 404.
-const STATIC_ROOT = path.join(__dirname, 'public');
+// server.js already lives in the `public/` folder in this project layout,
+// so serve static assets directly from __dirname instead of __dirname/public
+// which would resolve to .../public/public and cause 404s.
+const STATIC_ROOT = __dirname;
 app.use(express.static(STATIC_ROOT, { index: false }));
 
 // Content Security Policy (개발용)
