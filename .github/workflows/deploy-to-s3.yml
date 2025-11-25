@@ -19,14 +19,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
-      - name: Debug Node runtime
-        run: |
-          echo "=== Node / NPM debug ==="
-          node -v || true
-          npm -v || true
-          which node || true
-          ls -la "$(which node)" || true
-          echo "=== End debug ==="
+      # ...debug step removed (was used during troubleshooting)
 
       - name: Install dependencies (use npm install to avoid CI lockfile issues)
         run: |
@@ -54,4 +47,15 @@ jobs:
           else
             echo "No dist directory found. Uploading repository root instead (excluding .git)"
             aws s3 sync . s3://$S3_BUCKET --delete --exclude ".git/*" --exclude ".github/*"
+          fi
+
+      - name: Set index.html Cache-Control
+        env:
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+        run: |
+          if [ -f "dist/index.html" ]; then
+            echo "Setting Cache-Control for index.html to no-cache"
+            aws s3 cp dist/index.html s3://$S3_BUCKET/index.html --cache-control "no-cache, no-store, must-revalidate"
+          else
+            echo "No dist/index.html found — skipping cache-control step"
           fi
