@@ -3,6 +3,7 @@ name: Deploy to S3
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -36,7 +37,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Sync dist to S3
+      - name: Sync site files to S3
         env:
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
         run: |
@@ -44,8 +45,12 @@ jobs:
             echo "Syncing ./dist --> s3://$S3_BUCKET"
             aws s3 sync ./dist s3://$S3_BUCKET --delete \
               --cache-control "max-age=31536000,public"
+          elif [ -d "public" ]; then
+            echo "No dist found — Syncing ./public --> s3://$S3_BUCKET"
+            aws s3 sync ./public s3://$S3_BUCKET --delete \
+              --cache-control "max-age=31536000,public"
           else
-            echo "No dist directory found. Uploading repository root instead (excluding .git)"
+            echo "No dist or public directory found. Uploading repository root instead (excluding .git and .github)"
             aws s3 sync . s3://$S3_BUCKET --delete --exclude ".git/*" --exclude ".github/*"
           fi
 
@@ -59,3 +64,11 @@ jobs:
           else
             echo "No dist/index.html found — skipping cache-control step"
           fi
+
+      - name: Invalidate CloudFront (optional)
+        if: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        env:
+          DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          echo "Creating invalidation for CloudFront distribution $DISTRIBUTION_ID"
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"

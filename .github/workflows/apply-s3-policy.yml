@@ -1,0 +1,61 @@
+name: Apply S3 Bucket Policy
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Policy mode: SOURCEARN (CloudFront SourceArn) or OAI (Origin Access Identity)'
+        required: true
+        default: 'SOURCEARN'
+
+jobs:
+  apply-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Backup existing bucket policy (if any)
+        run: |
+          set -euo pipefail
+          BUCKET="${{ secrets.S3_BUCKET }}"
+          TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+          OUT="policy-backup-${TIMESTAMP}.json"
+          echo "Backing up existing policy (or creating empty backup) to $OUT"
+          aws s3api get-bucket-policy --bucket "$BUCKET" --query Policy --output text > "$OUT" 2>/dev/null || echo '{}' > "$OUT"
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bucket-policy-backup
+          path: policy-backup-*.json
+
+    - name: Generate policy JSON (script)
+    run: |
+      set -euo pipefail
+      export BUCKET="${{ secrets.S3_BUCKET }}"
+      export MODE="${{ github.event.inputs.mode }}"
+      export AWS_ACCOUNT_ID="${{ secrets.AWS_ACCOUNT_ID }}"
+      export CLOUDFRONT_DISTRIBUTION_ID="${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}"
+      export OAI_CANONICAL_USER_ID="${{ secrets.OAI_CANONICAL_USER_ID }}"
+      node .github/scripts/generate-s3-policy.js
+
+      - name: Apply new bucket policy
+        run: |
+          set -euo pipefail
+          BUCKET="${{ secrets.S3_BUCKET }}"
+          echo "Applying policy to s3://$BUCKET"
+          aws s3api put-bucket-policy --bucket "$BUCKET" --policy file:///tmp/new-policy.json
+
+      - name: Verify applied policy
+        run: |
+          BUCKET="${{ secrets.S3_BUCKET }}"
+          echo "Verifying policy for $BUCKET"
+          aws s3api get-bucket-policy --bucket "$BUCKET" --output json
